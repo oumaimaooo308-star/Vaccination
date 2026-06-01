@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Fiche employé')}"></head>
+
+<body>
+  <div class="page-wrapper">
+    <nav th:replace="~{layout/header :: navbar('employes')}"></nav>
+
+    <main class="main-content">
+
+      <!-- Fil d'Ariane -->
+      <div class="breadcrumb">
+        <a th:href="@{/employes}">Employés</a>
+        <i class="ti ti-chevron-right"
+           style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span th:text="${employe.nomComplet}">Hassan Alami</span>
+        <i class="ti ti-chevron-right"
+           style="font-size:12px;color:var(--text-muted);" aria-hidden="true"
+           th:if="${visite != null}"></i>
+        <span th:if="${visite != null}"
+              th:text="${visite.campagne.nomVaccin}">Hépatite B</span>
+      </div>
+
+      <!-- Badge statut -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;"
+           th:if="${visite != null}">
+        <span class="badge badge-vaccine"     style="font-size:13px;padding:6px 16px;"
+              th:if="${visite.etatVaccination == 'VACCINE'}">Vacciné</span>
+        <span class="badge badge-instance"    style="font-size:13px;padding:6px 16px;"
+              th:if="${visite.etatVaccination == 'EN_INSTANCE'}">En instance</span>
+        <span class="badge badge-nonvaccine"  style="font-size:13px;padding:6px 16px;"
+              th:if="${visite.etatVaccination == 'NON_VACCINE'}">Non vacciné</span>
+      </div>
+
+      <!-- Carte en-tête employé -->
+      <div class="employe-header-card">
+        <div class="employe-avatar" th:text="${employe.initiales}">HA</div>
+        <div class="employe-meta">
+          <h2 th:text="${employe.nomComplet}">Hassan Alami</h2>
+          <div class="employe-tags">
+            <span class="meta-tag">
+              <span class="dc-dp"
+                    th:classappend="${employe.typeDC == 'DC'} ? ' dc' : ' dp'"
+                    th:text="${employe.typeDC}">DC</span>
+            </span>
+            <span class="meta-tag" th:text="${employe.centre.ville}">Meknès</span>
+            <span class="meta-tag" th:text="${employe.posteTravaille}">Technicien senior</span>
+            <span class="meta-tag" th:text="${employe.categorieVF}">VF-A</span>
+            <span class="meta-tag" th:text="${employe.age} + ' ans'">47 ans</span>
+            <span class="meta-tag" th:text="${employe.telephone}">0661234567</span>
+          </div>
+        </div>
+        <div class="employe-actions">
+          <a sec:authorize="hasRole('GESTIONNAIRE')"
+             th:href="'tel:' + ${employe.telephone}" class="btn btn-outline">
+            <i class="ti ti-phone" aria-hidden="true"></i>
+            Appeler
+          </a>
+          <a sec:authorize="hasRole('GESTIONNAIRE')"
+             th:if="${visite != null and visite.etatVaccination == 'EN_INSTANCE'}"
+             th:href="@{/feuilles/{vId}/consentement-form(vId=${visite.id})}"
+             class="btn btn-primary">
+            <i class="ti ti-calendar-plus" aria-hidden="true"></i>
+            Fixer date de visite
+          </a>
+          <a sec:authorize="hasRole('GESTIONNAIRE')"
+             th:if="${visite != null}"
+             th:href="@{/feuilles/{vId}/imprimer(vId=${visite.id})}"
+             class="btn btn-outline">
+            <i class="ti ti-printer" aria-hidden="true"></i>
+            Imprimer feuille
+          </a>
+        </div>
+      </div>
+
+      <!-- Grille 3 colonnes -->
+      <div class="detail-grid">
+
+        <!-- ── Col 1 : Informations personnelles (inchangée) ── -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <i class="ti ti-user" aria-hidden="true"></i>
+            Informations personnelles
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">DC / DP</span>
+            <span class="detail-value">
+              <span class="dc-dp"
+                    th:classappend="${employe.typeDC == 'DC'} ? ' dc' : ' dp'"
+                    th:text="${employe.typeDC}">DC</span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Matricule</span>
+            <span class="detail-value"
+                  style="font-family:'DM Mono',monospace;font-size:12.5px;"
+                  th:text="${employe.matricule}">EMP-001</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date de naissance</span>
+            <span class="detail-value"
+                  th:text="${#temporals.format(employe.dateNaissance,'dd/MM/yyyy')}">14/03/1978</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Âge</span>
+            <span class="detail-value" th:text="${employe.age} + ' ans'">47 ans</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Sexe</span>
+            <span class="detail-value"
+                  th:text="${employe.sexe == 'M'} ? 'Masculin' : 'Féminin'">Masculin</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date de recrutement</span>
+            <span class="detail-value"
+                  th:text="${#temporals.format(employe.dateRecrutement,'dd/MM/yyyy')}">01/06/2005</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Ancienneté</span>
+            <span class="detail-value" th:text="${employe.anciennete} + ' ans'">20 ans</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date de retraite</span>
+            <span class="detail-value"
+                  th:text="${#temporals.format(employe.dateRetraite,'dd/MM/yyyy')}">14/03/2041</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Catégorie VF</span>
+            <span class="detail-value" th:text="${employe.categorieVF}">VF-A</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Activité</span>
+            <span class="detail-value" th:text="${employe.activite}">Exploitation</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Poste</span>
+            <span class="detail-value" th:text="${employe.posteTravaille}">Technicien senior</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Direction</span>
+            <span class="detail-value" th:text="${employe.direction}">DSI</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Téléphone</span>
+            <span class="detail-value"
+                  style="font-family:'DM Mono',monospace;font-size:12.5px;"
+                  th:text="${employe.telephone}">0661234567</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Ville</span>
+            <span class="detail-value" th:text="${employe.centre.ville}">Meknès</span>
+          </div>
+        </div>
+
+        <!-- ── Col 2 : Détails du vaccin (inchangée) ── -->
+        <div class="detail-card" th:if="${visite != null}">
+          <div class="detail-card-title">
+            <i class="ti ti-vaccine" aria-hidden="true"></i>
+            Détails du vaccin
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Vaccin</span>
+            <span class="detail-value" th:text="${visite.campagne.nomVaccin}">Hépatite B</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Doses prescrites</span>
+            <span class="detail-value"
+                  th:text="${visite.campagne.nbDose} + ' dose(s) max'"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Doses effectuées</span>
+            <span class="detail-value"
+                  th:text="${#lists.size(visite.doses)} + ' / ' + ${visite.campagne.nbDose}"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date visite</span>
+            <span class="detail-value" th:if="${visite.dateDecision != null}"
+                  th:text="${#temporals.format(visite.dateDecision,'dd/MM/yyyy')}"></span>
+            <span class="detail-value" style="color:var(--text-muted);"
+                  th:unless="${visite.dateDecision != null}">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Consentement</span>
+            <span class="badge badge-vaccine"
+                  th:if="${visite.etatConsentement == 'ACCEPTE'}">Accepté</span>
+            <span class="badge badge-nonvaccine"
+                  th:if="${visite.etatConsentement == 'REFUSE'}">Refusé</span>
+            <span style="color:var(--text-muted);font-size:13px;"
+                  th:if="${visite.etatConsentement == null}">En attente</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">État actuel</span>
+            <span class="badge badge-vaccine"
+                  th:if="${visite.etatVaccination == 'VACCINE'}">Vacciné</span>
+            <span class="badge badge-instance"
+                  th:if="${visite.etatVaccination == 'EN_INSTANCE'}">En instance</span>
+            <span class="badge badge-nonvaccine"
+                  th:if="${visite.etatVaccination == 'NON_VACCINE'}">Non vacciné</span>
+          </div>
+        </div>
+
+        <!-- Col 2 vide -->
+        <div class="detail-card" th:unless="${visite != null}">
+          <div class="detail-card-title">
+            <i class="ti ti-vaccine" aria-hidden="true"></i>
+            Détails du vaccin
+          </div>
+          <div class="empty-state" style="padding:30px 10px;">
+            <i class="ti ti-vaccine-bottle-off"
+               style="font-size:36px;opacity:.3;" aria-hidden="true"></i>
+            <h3>Aucune campagne assignée</h3>
+            <p>Cet employé n'est pas encore dans une campagne.</p>
+          </div>
+        </div>
+
+        <div class="detail-card" th:if="${visite != null}">
+          <div class="detail-card-title">
+            <i class="ti ti-droplet" aria-hidden="true"></i>
+            Suivi des doses
+          </div>
+
+        
+          <th:block th:with="nbFaites=${#lists.size(visite.doses)},
+                             nbTotal=${visite.campagne.nbDose}">
+
+            <!-- ── Liste des doses selon nbDose de la campagne ── -->
+            <div th:each="i : ${#numbers.sequence(1, nbTotal)}" class="dose-item">
+              <div class="dose-num"
+                   th:classappend="${nbFaites >= i} ? ' done' : ' pending'"
+                   th:text="${i}">1</div>
+              <div class="dose-info">
+                <div class="dose-title"
+                     th:text="${i == 1} ? '1ère dose' : (${i} + 'ème dose')"></div>
+                <div class="dose-date"
+                     th:if="${nbFaites >= i}"
+                     th:text="'Effectuée le ' + ${#temporals.format(visite.doses[i-1].dateDose,'dd/MM/yyyy')}">
+                </div>
+                <div class="dose-date" th:unless="${nbFaites >= i}">À planifier</div>
+              </div>
+              <span class="dose-status"
+                    th:classappend="${nbFaites >= i} ? ' done' : ' pending'"
+                    th:text="${nbFaites >= i} ? 'Faite' : 'En attente'">
+              </span>
+            </div>
+
+            <!-- ── Bouton "Enregistrer dose N" (une seule fois) ── -->
+            <div sec:authorize="hasRole('GESTIONNAIRE')"
+                 style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);"
+                 th:if="${visite.etatConsentement == 'ACCEPTE' and nbFaites < nbTotal}">
+              <a th:href="@{/campagnes/{cId}/visites/{vId}/doses(cId=${visite.campagne.id},vId=${visite.id})}"
+                 class="btn btn-primary btn-sm"
+                 style="width:100%;justify-content:center;">
+                <i class="ti ti-needle" aria-hidden="true"></i>
+                Enregistrer dose <span th:text="${nbFaites + 1}">1</span>
+              </a>
+            </div>
+
+            <!-- ── Message "Schéma vaccinal complet" (une seule fois) ── -->
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
+                        text-align:center;font-size:13px;
+                        color:var(--s-vaccine-tx);font-weight:600;"
+                 th:if="${nbFaites >= nbTotal}">
+              <i class="ti ti-circle-check" aria-hidden="true"></i>
+              Schéma vaccinal complet
+            </div>
+
+          </th:block>
+        </div>
+
+        <!-- Col 3 vide -->
+        <div class="detail-card" th:unless="${visite != null}">
+          <div class="detail-card-title">
+            <i class="ti ti-droplet" aria-hidden="true"></i>
+            Suivi des doses
+          </div>
+          <div class="empty-state" style="padding:30px 10px;">
+            <p>Aucune dose enregistrée.</p>
+          </div>
+        </div>
+
+      </div><!-- fin detail-grid -->
+
+      <!-- Boutons retour -->
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <a th:if="${visite != null}"
+           th:href="@{/campagnes/{cId}/visites(cId=${visite.campagne.id})}"
+           class="btn btn-outline btn-sm">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+          Retour aux visites
+        </a>
+        <a th:href="@{/employes}" class="btn btn-outline btn-sm">
+          <i class="ti ti-users" aria-hidden="true"></i>
+          Liste des employés
+        </a>
+      </div>
+
+    </main>
+  </div>
+</body>
+</html>

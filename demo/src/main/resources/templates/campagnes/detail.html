@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+
+
+<head th:replace="~{layout/header :: head('Détail campagne')}"></head>
+
+<body>
+  <div class="page-wrapper">
+    <nav th:replace="~{layout/header :: navbar('campagnes')}"></nav>
+
+    <main class="main-content">
+
+      <!-- Fil d'Ariane -->
+      <div class="breadcrumb">
+        <a th:href="@{/campagnes}">Campagnes</a>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span th:text="${campagne.nomVaccin}">Hépatite B</span>
+      </div>
+
+      <!-- ── En-tête campagne ── -->
+      <div class="campagne-detail-header">
+
+        <div class="campagne-icon">
+          <i class="ti ti-vaccine" aria-hidden="true"></i>
+        </div>
+
+        <div class="campagne-meta">
+          <h2 th:text="${campagne.nomVaccin}">Hépatite B</h2>
+          <p style="font-size:13.5px;color:var(--text-muted);margin:4px 0 0;" th:text="${campagne.description}">
+            Description de la campagne</p>
+
+          <div class="campagne-meta-tags">
+            <span class="campagne-tag">
+              <i class="ti ti-calendar" aria-hidden="true"></i>
+              <span th:text="${#temporals.format(campagne.dateCompagne,'dd/MM/yyyy')}">01/01/2025</span>
+            </span>
+            <span class="campagne-tag">
+              <i class="ti ti-map-pin" aria-hidden="true"></i>
+              <span th:text="${campagne.centre.ville}">Meknès</span>
+            </span>
+            <span class="campagne-tag">
+              <i class="ti ti-needle" aria-hidden="true"></i>
+              <span th:text="${campagne.nbDose} + ' dose(s) max'">3 doses max</span>
+            </span>
+            <span class="campagne-tag">
+              <i class="ti ti-users" aria-hidden="true"></i>
+              <span th:text="${#lists.size(campagne.visites)} + ' employé(s) ciblé(s)'">0 employés</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <!-- <div class="campagne-actions">
+          <a th:href="@{/campagnes/{id}/visites(id=${campagne.id})}"
+             class="btn btn-primary btn-sm">
+            <i class="ti ti-stethoscope" aria-hidden="true"></i>
+            Voir les visites
+          </a>
+          <a sec:authorize="hasRole('GESTIONNAIRE')"
+             th:href="@{/campagnes/{id}/ajouter-employes(id=${campagne.id})}"
+             class="btn btn-outline btn-sm">
+            <i class="ti ti-user-plus" aria-hidden="true"></i>
+            Affecter employés
+          </a>
+          <a th:href="@{/campagnes}" class="btn btn-outline btn-sm">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i>
+            Retour
+          </a>
+        </div> -->
+
+      </div>
+
+      <!-- ── Tableau collaborateurs ciblés ── -->
+      <div class="table-card">
+
+        <div class="table-card-header">
+          <div class="table-card-title">
+            <i class="ti ti-users" aria-hidden="true"></i>
+            Collaborateurs ciblés
+          </div>
+          <!-- Compteurs rapides -->
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span style="font-size:12px;color:var(--text-muted);">
+              <span class="stat-dot" style="background:var(--s-vaccine-dot);
+                width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;"></span>
+              Vaccinés :
+              <strong th:text="${campagne.visites.?[etatVaccination == 'VACCINE'].size()}">0</strong>
+            </span>
+            <span style="font-size:12px;color:var(--text-muted);">
+              <span class="stat-dot" style="background:var(--s-instance-dot);
+                width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;"></span>
+              En instance :
+              <strong th:text="${campagne.visites.?[etatVaccination == 'EN_INSTANCE'].size()}">0</strong>
+            </span>
+            <span style="font-size:12px;color:var(--text-muted);">
+              <span class="stat-dot" style="background:var(--s-nonvax-dot);
+                width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;"></span>
+              Non vaccinés :
+              <strong th:text="${campagne.visites.?[etatVaccination == 'NON_VACCINE'].size()}">0</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div class="empty-state" th:if="${#lists.isEmpty(campagne.visites)}">
+          <i class="ti ti-users-group" style="font-size:36px;opacity:.3;" aria-hidden="true"></i>
+          <h3>Aucun employé affecté</h3>
+          <p>Aucun collaborateur n'a encore été ajouté à cette campagne.</p>
+          <a sec:authorize="hasRole('GESTIONNAIRE')" th:href="@{/campagnes/{id}/ajouter-employes(id=${campagne.id})}"
+            class="btn btn-primary btn-sm" style="margin-top:10px;">
+            <i class="ti ti-user-plus" aria-hidden="true"></i>
+            Affecter des employés
+          </a>
+        </div>
+
+        <!-- Tableau -->
+        <div th:unless="${#lists.isEmpty(campagne.visites)}" style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>NOM ET PRÉNOM</th>
+                <th>MATRICULE</th>
+                <th>DIRECTION</th>
+                <th>CONSENTEMENT</th>
+                <th>DOSES</th>
+                <th>ÉTAT</th>
+                <!-- <th>ACTIONS</th> -->
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="visite : ${visitesPage}">
+
+                <!-- Nom + avatar -->
+                <td>
+                  <div style="display:flex;align-items:center;gap:9px;">
+                    <div style="width:30px;height:30px;border-radius:50%;
+                               background:var(--srm-green-light);flex-shrink:0;
+                               display:flex;align-items:center;justify-content:center;
+                               font-size:11px;font-weight:700;color:var(--srm-green);" th:text="${#strings.substring(visite.employe.nom,0,1)
+                                  + #strings.substring(visite.employe.prenom,0,1)}">HA</div>
+                    <a th:href="@{/employes/{id}(id=${visite.employe.id},campagneId=${campagne.id})}" class="td-name"
+                      th:text="${visite.employe.nom + ' ' + visite.employe.prenom}">Hassan Alami</a>
+                  </div>
+                </td>
+
+                <td style="font-family:'DM Mono',monospace;font-size:12px;" th:text="${visite.employe.matricule}">
+                  EMP-001</td>
+
+                <td style="font-size:13px;" th:text="${visite.employe.direction}">DSI</td>
+
+                <!-- Consentement -->
+                <td>
+                  <span class="badge badge-vaccine" th:if="${visite.etatConsentement == 'ACCEPTE'}">Accepté</span>
+                  <span class="badge badge-nonvaccine" th:if="${visite.etatConsentement == 'REFUSE'}">Refusé</span>
+                  <span style="color:var(--text-muted);font-size:12px;" th:if="${visite.etatConsentement == null}">En
+                    attente</span>
+                </td>
+
+                <!-- Doses -->
+                <td>
+                  <div style="display:flex;gap:4px;align-items:center;">
+                    <span th:each="i : ${#numbers.sequence(1, campagne.nbDose)}"
+                      th:style="${i <= (visite.doses != null ? #lists.size(visite.doses) : 0)}
+                              ? 'width:9px;height:9px;border-radius:50%;background:var(--s-vaccine-dot);display:inline-block;'
+                              : 'width:9px;height:9px;border-radius:50%;border:1.5px solid var(--border-strong);display:inline-block;'">
+                    </span>
+                    <span style="font-size:11px;color:var(--text-muted);margin-left:3px;"
+                      th:text="${visite.doses != null ? #lists.size(visite.doses) : 0} + '/' + ${campagne.nbDose}">
+                    </span>
+                  </div>
+                </td>
+
+                <!-- État -->
+                <td>
+                  <span class="badge badge-vaccine" th:if="${visite.etatVaccination == 'VACCINE'}">Vacciné</span>
+                  <span class="badge badge-instance" th:if="${visite.etatVaccination == 'EN_INSTANCE'}">En
+                    instance</span>
+                  <span class="badge badge-nonvaccine" th:if="${visite.etatVaccination == 'NON_VACCINE'}">Non
+                    vacciné</span>
+                </td>
+
+               
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      <div th:replace="~{layout/pagination :: pagination(
+    ${currentPage},
+    ${totalPages},
+    '/campagnes/' + ${campagne.id},
+    '')}">
+      </div>
+      <!-- fin table-card -->
+
+    </main>
+  </div>
+</body>
+
+</html>

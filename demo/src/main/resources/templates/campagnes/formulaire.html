@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+
+<head th:replace="~{layout/header :: head('Nouvelle campagne')}"></head>
+
+<body>
+  <div class="page-wrapper">
+
+    <nav th:replace="~{layout/header :: navbar('campagnes')}"></nav>
+
+    <main class="main-content">
+
+      <!-- Fil d'Ariane -->
+      <div class="breadcrumb">
+        <a th:href="@{/campagnes}">Campagnes</a>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span>Nouvelle campagne</span>
+      </div>
+
+      <!-- En-tête -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Nouvelle campagne</h1>
+          <p class="page-subtitle">Configurez et lancez une campagne de vaccination pour votre centre</p>
+        </div>
+        <a th:href="@{/campagnes}" class="btn btn-outline btn-sm">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+          Retour
+        </a>
+      </div>
+
+      <!-- Formulaire -->
+      <div style="max-width:720px; margin:0 auto;">
+
+        <form th:action="@{/campagnes/nouveau}" th:object="${campagneDTO}" method="post" enctype="multipart/form-data">
+
+          <!-- Champ caché centreId -->
+          <input type="hidden" name="centreId" th:value="${centreId}" />
+
+          <!-- ── Section 1 : Informations du vaccin ── -->
+          <div class="f-section">
+            <div class="f-section-title">
+              <i class="ti ti-vaccine" aria-hidden="true"></i>
+              Informations du vaccin
+            </div>
+
+            <!-- Nom du vaccin -->
+            <div class="f-group">
+              <label class="f-label" for="nomVaccin">
+                Nom du vaccin <span class="f-required">*</span>
+              </label>
+              <input type="text" id="nomVaccin" th:field="*{nomVaccin}" class="f-input"
+                placeholder="ex : Hépatite B, Grippe saisonnière…" required maxlength="100" />
+            </div>
+
+            <!-- Description -->
+            <div class="f-group">
+              <label class="f-label" for="description">
+                Description
+                <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(optionnel)</span>
+              </label>
+              <textarea id="description" th:field="*{description}" class="f-input f-textarea"
+                placeholder="Objectif, population cible, protocole…" rows="3"></textarea>
+            </div>
+
+            <!-- Date + Nb doses -->
+            <div class="f-row2">
+              <div class="f-group">
+                <label class="f-label" for="dateCompagne">
+                  Date de lancement <span class="f-required">*</span>
+                </label>
+                <input type="date" id="dateCompagne" th:field="*{dateCompagne}" class="f-input" required />
+              </div>
+              <div class="f-group">
+                <label class="f-label" for="nbDoses">
+                  Doses max <span class="f-required">*</span>
+                </label>
+                <input type="number" id="nbDoses" name="nbDoses" class="f-input" min="1" max="3"
+                  placeholder="ex : 2" required /> 
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ── Section 2 : Affecter des employés (optionnel) ── -->
+          <div class="f-section">
+            <div class="f-section-title">
+              <i class="ti ti-users" aria-hidden="true"></i>
+              Affecter des employés
+              <span style="font-weight:400;font-size:12px;color:var(--text-muted);margin-left:4px;">(optionnel)</span>
+            </div>
+
+            <!-- Onglets -->
+            <div class="f-tabs">
+              <button type="button" class="f-tab f-tab-active" data-target="tabDir">
+                <i class="ti ti-building" aria-hidden="true"></i> Par direction
+              </button>
+              <button type="button" class="f-tab" data-target="tabImport">
+                <i class="ti ti-file-import" aria-hidden="true"></i> Import Excel / CSV
+              </button>
+            </div>
+
+            <!-- Tab direction -->
+            <div id="tabDir" class="f-tab-pane">
+              <p class="f-hint">
+                Cochez les directions à inclure — tous leurs employés seront initialisés en
+                <span class="badge badge-instance" style="font-size:11px;">EN_INSTANCE</span>.
+              </p>
+              <div class="f-dir-grid">
+                <label th:each="dir, s : ${directions}" class="f-dir-item" th:for="'dir-' + ${s.index}">
+                  <input type="checkbox" name="directionsSelectionnees" th:value="${dir}" th:id="'dir-' + ${s.index}" />
+                  <span th:text="${dir}">Direction</span>
+                </label>
+                <p th:if="${#lists.isEmpty(directions)}" class="f-hint">
+                  <i class="ti ti-info-circle" aria-hidden="true"></i>
+                  Aucune direction trouvée pour ce centre.
+                </p>
+              </div>
+            </div>
+
+            <!-- Tab import -->
+            <div id="tabImport" class="f-tab-pane" style="display:none;">
+              <p class="f-hint">
+                Importez un <strong>.xlsx</strong> ou <strong>.csv</strong> avec une colonne
+                <code>matricule</code>. Les matricules inconnus sont ignorés.
+              </p>
+              <div class="f-dropzone" id="dropZone">
+                <i class="ti ti-upload" aria-hidden="true"
+                  style="font-size:28px;color:var(--text-muted);display:block;margin-bottom:8px;"></i>
+                <div style="font-size:13.5px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;">
+                  Glissez un fichier ici ou
+                </div>
+                <label for="fichierImport" class="btn btn-outline btn-sm" style="cursor:pointer;">
+                  <i class="ti ti-folder-open" aria-hidden="true"></i> Parcourir
+                </label>
+                <input type="file" id="fichierImport" name="fichierImport" accept=".xlsx,.xls,.csv"
+                  style="display:none;" onchange="majNomFichier(this)" />
+                <div id="nomFichier" style="display:none;margin-top:10px;font-size:12.5px;
+                          color:var(--srm-green);font-weight:600;"></div>
+              </div>
+              <div style="margin-top:10px;">
+                <a th:href="@{/campagnes/modele-import}" class="btn btn-outline btn-sm">
+                  <i class="ti ti-download" aria-hidden="true"></i> Télécharger le modèle
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ── Boutons ── -->
+          <div class="f-actions">
+            <a th:href="@{/campagnes}" class="btn btn-outline">
+              <i class="ti ti-x" aria-hidden="true"></i> Annuler
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="ti ti-check" aria-hidden="true"></i> Créer la campagne
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── Styles ── -->
+  <style>
+    .f-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .f-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .f-section-title i {
+      color: var(--srm-green);
+      font-size: 17px;
+    }
+
+    .f-group {
+      margin-bottom: 16px;
+    }
+
+    .f-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .f-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .f-required {
+      color: #dc2626;
+    }
+
+    .f-input {
+      width: 100%;
+      padding: 9px 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      font-size: 13.5px;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      box-sizing: border-box;
+      font-family: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .f-input:focus {
+      outline: none;
+      border-color: var(--srm-green);
+      box-shadow: 0 0 0 3px rgba(26, 107, 74, .12);
+    }
+
+    .f-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .f-row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width:560px) {
+      .f-row2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .f-hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0 0 14px;
+    }
+
+    /* Onglets */
+    .f-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .f-tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: var(--r-md) var(--r-md) 0 0;
+      transition: color .15s;
+    }
+
+    .f-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .f-tab.f-tab-active {
+      color: var(--srm-green);
+      border-bottom-color: var(--srm-green);
+    }
+
+    /* Checkboxes directions */
+    .f-dir-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+    }
+
+    .f-dir-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--bg-page);
+      transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+
+    .f-dir-item:hover {
+      border-color: var(--srm-green);
+      background: var(--srm-green-light, #e8f5ee);
+    }
+
+    .f-dir-item input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--srm-green);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .f-dir-item:has(input:checked) {
+      border-color: var(--srm-green);
+      background: var(--srm-green-light, #e8f5ee);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Zone de dépôt */
+    .f-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--r-md);
+      padding: 28px 20px;
+      text-align: center;
+      background: var(--bg-page);
+      transition: border-color .15s, background .15s;
+    }
+
+    .f-dropzone.over {
+      border-color: var(--srm-green);
+      background: var(--srm-green-light, #e8f5ee);
+    }
+
+    /* Boutons du bas */
+    .f-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 8px;
+    }
+  </style>
+
+  <!-- ── Scripts ── -->
+  <script>
+    // Onglets
+    document.querySelectorAll('.f-tab').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.f-tab').forEach(b => b.classList.remove('f-tab-active'));
+        document.querySelectorAll('.f-tab-pane').forEach(p => p.style.display = 'none');
+        this.classList.add('f-tab-active');
+        document.getElementById(this.dataset.target).style.display = 'block';
+      });
+    });
+
+    // Nom du fichier sélectionné
+    function majNomFichier(input) {
+      const el = document.getElementById('nomFichier');
+      if (input.files.length > 0) {
+        el.textContent = '✓ ' + input.files[0].name;
+        el.style.display = 'block';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
+    // Drag & drop
+    const zone = document.getElementById('dropZone');
+    const inp = document.getElementById('fichierImport');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      if (e.dataTransfer.files.length) {
+        inp.files = e.dataTransfer.files;
+        majNomFichier(inp);
+      }
+    });
+  </script>
+
+</body>
+
+</html>

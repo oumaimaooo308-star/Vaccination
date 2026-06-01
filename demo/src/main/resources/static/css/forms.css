@@ -1,0 +1,207 @@
+/* ── Carte formulaire centrée ── */
+.srm-form-page {
+  min-height: 100vh;
+  background: var(--bg-page, #f5f7fa);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.srm-form-container {
+  width: 100%;
+  max-width: 580px;
+}
+
+.srm-form-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+
+/* ── En-tête coloré ── */
+.srm-form-header {
+  background: var(--srm-green, #1A6B4A);
+  padding: 24px 28px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.srm-form-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.srm-form-header-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.srm-form-header-sub {
+  font-size: 13px;
+  opacity: .85;
+}
+
+/* ── Bloc infos readonly ── */
+.srm-info-block {
+  padding: 16px 28px;
+  background: #f8faf9;
+  border-bottom: 1px solid #e8f0eb;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.srm-info-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #888;
+  margin-bottom: 3px;
+}
+
+.srm-info-value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ── Corps du formulaire ── */
+.srm-form-body {
+  padding: 28px;
+}
+
+/* ── Champ de saisie ── */
+.srm-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #d0d7de;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+  font-family: inherit;
+}
+
+.srm-input:focus {
+  border-color: var(--srm-green, #1A6B4A);
+}
+
+.srm-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.srm-field {
+  margin-bottom: 20px;
+}
+
+/* ── Boutons consentement ── */
+.consent-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 2px solid #d0d7de;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: border-color .2s, background .2s;
+  background: white;
+}
+
+.consent-card:hover {
+  background: #fafafa;
+}
+
+.consent-card.selected-oui {
+  border-color: #2e7d32;
+  background: #f1f8f1;
+}
+
+.consent-card.selected-non {
+  border-color: #c62828;
+  background: #fff5f5;
+}
+
+.consent-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.consent-icon.oui { background: #e8f5e9; color: #2e7d32; }
+.consent-icon.non { background: #fdecea; color: #c62828; }
+
+.consent-title-oui { font-weight: 600; font-size: 14px; color: #2e7d32; }
+.consent-title-non { font-weight: 600; font-size: 14px; color: #c62828; }
+.consent-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+/* ── Footer formulaire ── */
+.srm-form-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+}
+
+.srm-btn-cancel {
+  padding: 10px 20px;
+  border: 1.5px solid #d0d7de;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  text-decoration: none;
+  background: white;
+  transition: background .2s;
+}
+
+.srm-btn-cancel:hover { background: #f5f5f5; }
+
+.srm-btn-submit {
+  padding: 10px 24px;
+  background: var(--srm-green, #1A6B4A);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+
+.srm-btn-submit:disabled { opacity: .45; cursor: not-allowed; }
+.srm-btn-submit:not(:disabled):hover { opacity: .88; }
+
+/* ── Modal campagne ── */
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 540px) {
+  .modal-row { grid-template-columns: 1fr; }
+  .srm-info-block { grid-template-columns: 1fr; }
+}

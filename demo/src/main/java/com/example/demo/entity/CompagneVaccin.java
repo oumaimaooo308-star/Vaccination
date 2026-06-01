@@ -34,6 +34,9 @@ public class CompagneVaccin {
     @Column(nullable=false)
     private LocalDate dateCompagne;
 
+    @Column(nullable = false)
+    private Integer nbDose =1;
+
     @ManyToOne
     @JoinColumn(name = "centre_id",nullable = false)
     private Centre centre;

@@ -1,0 +1,331 @@
+/* ── Dashboard ────────────────── */
+.dash-filter-bar {
+  margin: 0 0 20px 0;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.dash-filter-bar label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dash-filter-bar select {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  cursor: pointer;
+  min-width: 200px;
+}
+.dash-filter-reset {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash-filter-reset a {
+  color: var(--srm-green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+@media (max-width: 1280px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 860px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* Cartes stat — 2 cartes centrées si impaire dans la dernière ligne */
+.stat-grid .stat-card:nth-child(4),
+.stat-grid .stat-card:nth-child(5) {
+  /* Laisse Bootstrap ou le navigateur gérer — pas besoin de hack */
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border-left: 3px solid transparent;
+}
+.stat-blue   { border-left-color: #2980B9; }
+.stat-green  { border-left-color: var(--srm-green); }
+.stat-amber  { border-left-color: var(--s-instance-dot); }
+.stat-orange { border-left-color: #ea580c; }
+.stat-red    { border-left-color: var(--s-nonvax-dot); }
+
+.stat-value { font-size: 30px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+.stat-blue   .stat-value { color: #2980B9; }
+.stat-green  .stat-value { color: var(--srm-green); }
+.stat-amber  .stat-value { color: var(--s-instance-tx); }
+.stat-orange .stat-value { color: #ea580c; }
+.stat-red    .stat-value { color: var(--s-nonvax-tx); }
+
+.stat-label { font-size: 12.5px; color: var(--text-secondary); font-weight: 500; }
+.stat-sub   { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── Dashboard grid ─────────────────────────────────────────────────── */
+.dash-main-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dash-top-row {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+.dash-bottom-row {
+  /* "Dernières doses" : pleine largeur, même largeur que le tableau suivi */
+  width: 100%;
+}
+@media (max-width: 1024px) {
+  .dash-top-row { grid-template-columns: 1fr; }
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.table-card-title { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.empty-dash { padding: 40px 20px; text-align: center; }
+.action-link { font-size: 12.5px; color: var(--s-instance-tx); font-weight: 600; text-decoration: none; }
+
+/* ── Dernières doses — pleine largeur, grille horizontale ─────────── */
+.doses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  padding: 16px 18px;
+}
+.dose-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-page);
+}
+.dose-card-avatar {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--srm-green-light, #e8f5ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--srm-green);
+}
+.dose-card-info { flex: 1; min-width: 0; }
+.dose-card-name {
+  font-weight: 600; font-size: 13px;
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: block;
+}
+.dose-card-name:hover { color: var(--srm-green); }
+.dose-card-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── Page campagnes/liste ────────────────────────────────────────────── */
+.camp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.camp-header-actions { display: flex; gap: 10px; align-items: center; }
+.camp-search { margin-bottom: 14px; }
+.camp-search input {
+  width: 100%; max-width: 380px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+/* ── Détail campagne ────────────────────────────────────────────────── */
+.campagne-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.campagne-icon {
+  width: 56px; height: 56px; flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: var(--srm-green-light, #e8f5ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; color: var(--srm-green);
+}
+.campagne-meta { flex: 1; }
+.campagne-meta h2 { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+.campagne-meta-tags {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+}
+.campagne-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-page);
+}
+.campagne-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+/* ── Visites liste ───────────────────────────────────────────────────── */
+.visites-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.visites-header-left h2 {
+  font-size: 20px; font-weight: 700; margin: 0 0 4px;
+  color: var(--text-primary);
+}
+.visites-header-meta {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.visites-meta-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.visites-header-actions { display: flex; gap: 8px; }
+
+/* ── Page doses ──────────────────────────────────────────────────────── */
+.doses-page-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 0;
+}
+.doses-employe-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: 20px;
+}
+.doses-employe-avatar {
+  width: 48px; height: 48px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--srm-green-light, #e8f5ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; color: var(--srm-green);
+}
+.doses-employe-info h3 { margin: 0 0 2px; font-size: 16px; font-weight: 700; }
+.doses-employe-info p  { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+
+.doses-progress-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.dose-step {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex; align-items: center; gap: 10px;
+}
+.dose-step.done  { border-color: var(--srm-green); background: var(--srm-green-light, #e8f5ee); }
+.dose-step.current { border-color: var(--s-instance-dot); background: #fffbeb; }
+.dose-step.pending { opacity: 0.55; }
+.dose-step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.dose-step.done    .dose-step-num { background: var(--srm-green); color: white; }
+.dose-step.current .dose-step-num { background: var(--s-instance-dot); color: white; }
+.dose-step.pending .dose-step-num { background: var(--border); color: var(--text-muted); }
+.dose-step-label { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.dose-step-date  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+.doses-form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.doses-form-card h5 {
+  font-size: 14px; font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 6px;
+}
+.doses-form-card .form-group { margin-bottom: 14px; }
+.doses-form-card label {
+  display: block; font-size: 12.5px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 5px;
+}
+.doses-form-card input[type="date"] {
+  width: 100%; padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+.doses-form-card input[type="date"]:focus {
+  outline: none;
+  border-color: var(--srm-green);
+  box-shadow: 0 0 0 3px rgba(26,107,74,.12);
+}
+.doses-form-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+.doses-alert {
+  padding: 16px 20px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 16px;
+}
+.doses-alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+.doses-alert.danger  { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+.doses-alert.warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+
+/* ── Admin page ──────────────────────────────────────────────────────── */
+.admin-header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }

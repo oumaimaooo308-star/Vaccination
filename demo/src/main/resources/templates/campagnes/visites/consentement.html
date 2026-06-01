@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Consentement')}"></head>
+<body>
+<div th:replace="~{layout/header :: navbar('campagnes')}"></div>
+
+<div class="srm-form-page">
+  <div class="srm-form-container">
+
+    <!-- Fil d'Ariane -->
+    <div style="font-size:13px;color:#888;margin-bottom:20px;">
+      <a th:href="@{/campagnes}"
+         style="color:var(--srm-green,#1A6B4A);text-decoration:none;">Campagnes</a>
+      <span style="margin:0 6px;">›</span>
+      <a th:href="@{/campagnes/{id}/visites(id=${campagneId})}"
+         th:text="${visite.campagne.nomVaccin}"
+         style="color:var(--srm-green,#1A6B4A);text-decoration:none;">Campagne</a>
+      <span style="margin:0 6px;">›</span>
+      <span th:text="${visite.employe.nom + ' ' + visite.employe.prenom}">Employé</span>
+    </div>
+
+    <div class="srm-form-card">
+
+      <!-- En-tête -->
+      <div class="srm-form-header">
+        <div class="srm-form-header-icon">
+          <i class="ti ti-writing"></i>
+        </div>
+        <div>
+          <div class="srm-form-header-title">Enregistrer le consentement</div>
+          <div class="srm-form-header-sub"
+               th:text="'Campagne : ' + ${visite.campagne.nomVaccin}"></div>
+        </div>
+      </div>
+
+      <!-- Infos employé -->
+      <div class="srm-info-block">
+        <div>
+          <div class="srm-info-label">Collaborateur</div>
+          <div class="srm-info-value"
+               th:text="${visite.employe.nom + ' ' + visite.employe.prenom}"></div>
+        </div>
+        <div>
+          <div class="srm-info-label">Matricule</div>
+          <div class="srm-info-value" style="font-family:monospace;"
+               th:text="${visite.employe.matricule}"></div>
+        </div>
+        <div>
+          <div class="srm-info-label">Direction</div>
+          <div class="srm-info-value" th:text="${visite.employe.direction}"></div>
+        </div>
+        <div>
+          <div class="srm-info-label">Poste</div>
+          <div class="srm-info-value" th:text="${visite.employe.posteTravaille}"></div>
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <div class="srm-form-body">
+        <form th:action="@{/campagnes/{cId}/visites/{vId}/consentement(cId=${campagneId},vId=${visite.id})}"
+              th:object="${visiteDTO}" method="post">
+
+          <!-- Date -->
+          <div class="srm-field">
+            <label class="srm-label">
+              <i class="ti ti-calendar me-1"
+                 style="color:var(--srm-green,#1A6B4A);"></i>Date de la visite *
+            </label>
+            <input type="date" th:field="*{dateDecision}"
+                   class="srm-input" style="max-width:240px;" required/>
+          </div>
+
+          <!-- Consentement -->
+          <div class="srm-field">
+            <label class="srm-label">
+              <i class="ti ti-shield-check me-1"
+                 style="color:var(--srm-green,#1A6B4A);"></i>Décision du collaborateur *
+            </label>
+
+            <input type="hidden" id="etatConsentement" th:field="*{etatConsentement}"/>
+
+            <div class="consent-card" id="btnOui" onclick="choisir('ACCEPTE')">
+              <div class="consent-icon oui">
+                <i class="ti ti-circle-check"></i>
+              </div>
+              <div>
+                <div class="consent-title-oui">J'accepte la vaccination</div>
+                <div class="consent-sub">Statut maintenu EN_INSTANCE — doses à enregistrer</div>
+              </div>
+            </div>
+
+            <div class="consent-card" id="btnNon" onclick="choisir('REFUSE')">
+              <div class="consent-icon non">
+                <i class="ti ti-circle-x"></i>
+              </div>
+              <div>
+                <div class="consent-title-non">Je refuse la vaccination</div>
+                <div class="consent-sub">Statut → NON_VACCINE automatiquement</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="srm-form-footer">
+            <a th:href="@{/campagnes/{cId}/visites(cId=${campagneId})}"
+               class="srm-btn-cancel">
+              <i class="ti ti-arrow-left me-1"></i>Annuler
+            </a>
+            <button type="submit" id="btnSubmit" class="srm-btn-submit" disabled>
+              <i class="ti ti-device-floppy me-1"></i>Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function choisir(v) {
+    document.getElementById('etatConsentement').value = v;
+    document.getElementById('btnOui').className = 'consent-card' + (v==='ACCEPTE' ? ' selected-oui' : '');
+    document.getElementById('btnNon').className = 'consent-card' + (v==='REFUSE' ? ' selected-non' : '');
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Connexion')}"></head>
+
+<body style="background:var(--bg-page); display:flex;
+             align-items:center; justify-content:center; min-height:100vh;">
+
+  <div style="width:100%; max-width:400px; padding:24px;">
+    <div class="detail-card">
+
+      <!-- Logo -->
+      <div style="text-align:center; margin-bottom:24px;">
+        <img th:src="@{/images/srm-logo.png}" alt="SRM" style="height:56px; width:auto;" />
+        <div style="font-size:20px; font-weight:700;
+                    color:var(--text-primary); margin-top:12px;">
+          SRM Vaccination
+        </div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+          Connectez-vous pour accéder à l'application
+        </div>
+      </div>
+
+      <!-- Message d'erreur -->
+      <div th:if="${param.error}" style="background:#fef2f2; border:1px solid #fecaca;
+                  border-radius:8px; padding:12px 16px;
+                  color:#dc2626; font-size:13.5px; margin-bottom:16px;">
+        <i class="ti ti-alert-circle me-1"></i>
+        Identifiant ou mot de passe incorrect.
+      </div>
+
+      <!-- Message déconnexion -->
+      <div th:if="${param.logout}" style="background:#f0fdf4; border:1px solid #bbf7d0;
+                  border-radius:8px; padding:12px 16px;
+                  color:#16a34a; font-size:13.5px; margin-bottom:16px;">
+        <i class="ti ti-circle-check me-1"></i>
+        Vous avez été déconnecté.
+      </div>
+
+      <!-- Formulaire — th:action injecte automatiquement le token CSRF -->
+      <form th:action="@{/login}" method="post">
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px; font-weight:600;
+                        color:var(--text-secondary); display:block;
+                        margin-bottom:6px;">Nom d'utilisateur</label>
+          <input type="text" name="username" required autofocus style="width:100%; padding:9px 12px;
+                        border:1px solid var(--border); border-radius:8px;
+                        font-size:14px; background:var(--bg-page);
+                        color:var(--text-primary); box-sizing:border-box;" />
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px; font-weight:600;
+                        color:var(--text-secondary); display:block;
+                        margin-bottom:6px;">Mot de passe</label>
+          <input type="password" name="password" required style="width:100%; padding:9px 12px;
+                        border:1px solid var(--border); border-radius:8px;
+                        font-size:14px; background:var(--bg-page);
+                        color:var(--text-primary); box-sizing:border-box;" />
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; font-size:15px;">
+          <i class="ti ti-login me-1"></i>
+          Se connecter
+        </button>
+      </form>
+
+    </div>
+  </div>
+</body>
+
+</html>

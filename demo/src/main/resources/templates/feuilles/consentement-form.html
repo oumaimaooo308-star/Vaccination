@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Consentement')}"></head>
+
+
+<body>
+  <div th:replace="~{layout/header :: navbar('campagnes')}"></div>
+
+  <div class="srm-form-page">
+    <div class="srm-form-container">
+
+      <div class="srm-form-card">
+
+        <div class="srm-form-header">
+          <div class="srm-form-header-icon" style="background:none; padding:0;">
+            <img th:src="@{/images/srm-logo.png}" alt="SRM" style="height:48px; width:auto; object-fit:contain;" />
+          </div>
+          <div>
+            <div class="srm-form-header-title">Feuille de consentement</div>
+            <div class="srm-form-header-sub" th:text="'Campagne : ' + ${campagne.nomVaccin}"></div>
+          </div>
+        </div>
+
+        <div class="srm-info-block">
+          <div>
+            <div class="srm-info-label">Nom complet</div>
+            <div class="srm-info-value" th:text="${employe.nomComplet}"></div>
+          </div>
+          <div>
+            <div class="srm-info-label">Matricule</div>
+            <div class="srm-info-value" style="font-family:monospace;" th:text="${employe.matricule}"></div>
+          </div>
+          <div>
+            <div class="srm-info-label">Direction</div>
+            <div class="srm-info-value" th:text="${employe.direction}"></div>
+          </div>
+          <div>
+            <div class="srm-info-label">Poste</div>
+            <div class="srm-info-value" th:text="${employe.posteTravaille}"></div>
+          </div>
+        </div>
+
+        <div class="srm-form-body">
+          <form th:action="@{'/feuilles/' + ${visite.id} + '/consentement'}" method="post" th:object="${visiteDTO}">
+
+            <div class="srm-field">
+              <label class="srm-label">
+                <i class="ti ti-calendar me-1" style="color:var(--srm-green,#1A6B4A);"></i>Date de la visite *
+              </label>
+              <input type="date" id="dateDecision" name="dateDecision" class="srm-input" style="max-width:240px;"
+                th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}" required />
+            </div>
+
+            <div class="srm-field">
+              <label class="srm-label">Décision du collaborateur *</label>
+              <div class="form-check consent-card" style="cursor:default;padding:14px 18px;">
+                <input type="radio" name="etatConsentement" id="radioAccepte" value="ACCEPTE" class="form-check-input"
+                  required />
+                <label class="form-check-label ms-2" for="radioAccepte">
+                  <span class="consent-title-oui">
+                    <i class="ti ti-circle-check me-1"></i>J'accepte
+                  </span>
+                  <span class="consent-sub d-block">Consent à la vaccination</span>
+                </label>
+              </div>
+              <div class="form-check consent-card" style="cursor:default;padding:14px 18px;">
+                <input type="radio" name="etatConsentement" id="radioRefuse" value="REFUSE" class="form-check-input" />
+                <label class="form-check-label ms-2" for="radioRefuse">
+                  <span class="consent-title-non">
+                    <i class="ti ti-circle-x me-1"></i>Je refuse
+                  </span>
+                  <span class="consent-sub d-block">Statut → NON_VACCINE</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="srm-form-footer">
+              <a th:href="@{/employes/{id}(id=${employe.id}, campagneId=${visite.campagne.id})}" class="srm-btn-cancel">
+                <i class="ti ti-arrow-left me-1"></i>Retour
+              </a>
+              <button sec:authorize="hasRole('GESTIONNAIRE')" type="submit" class="srm-btn-submit">
+                <i class="ti ti-device-floppy me-1"></i>Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

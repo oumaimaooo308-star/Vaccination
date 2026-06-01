@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Doses')}"></head>
+
+<body>
+  <div class="page-wrapper">
+    <nav th:replace="~{layout/header :: navbar('campagnes')}"></nav>
+
+    <main class="main-content">
+
+      <!-- Fil d'Ariane -->
+      <div class="breadcrumb">
+        <a th:href="@{/campagnes}">Campagnes</a>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span th:text="${campagne.nomVaccin}">Hépatite B</span>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <a th:href="@{/campagnes/{cId}/visites(cId=${campagneId})}">Visites</a>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span>Doses</span>
+      </div>
+
+      <!-- Wrapper centré -->
+      <div class="doses-page-wrapper">
+
+        <!-- ── Carte employé ── -->
+        <div class="doses-employe-card">
+          <div class="doses-employe-avatar"
+               th:text="${#strings.substring(visite.employe.nom,0,1)
+                        + #strings.substring(visite.employe.prenom,0,1)}">HA</div>
+          <div class="doses-employe-info">
+            <h3 th:text="${visite.employe.nom + ' ' + visite.employe.prenom}">Hassan Alami</h3>
+            <p>
+              <span th:text="${campagne.nomVaccin}">Hépatite B</span>
+              · <span th:text="${visite.employe.matricule}">EMP-001</span>
+              · <span th:text="${visite.employe.centre.ville}">Meknès</span>
+            </p>
+          </div>
+          <!-- Badge état actuel -->
+          <div style="margin-left:auto;flex-shrink:0;">
+            <span class="badge badge-instance"
+                  th:if="${visite.etatVaccination == 'EN_INSTANCE'}">En instance</span>
+            <span class="badge badge-nonvaccine"
+                  th:if="${visite.etatVaccination == 'NON_VACCINE'}">Non vacciné</span>
+            <span class="badge badge-vaccine"
+                  th:if="${visite.etatVaccination == 'VACCINE'}">Vacciné</span>
+          </div>
+        </div>
+
+        <!-- ── Barre de progression des doses ── -->
+        <th:block th:with="nbFaites=${doses != null ? #lists.size(doses) : 0},
+                           nbTotal=${nbDosesMax}">
+
+          <div class="doses-progress-row">
+            <div th:each="i : ${#numbers.sequence(1, nbTotal)}"
+                 class="dose-step"
+                 th:classappend="${i <= nbFaites} ? ' done'
+                               : (${i == nbFaites + 1 and visite.etatConsentement == 'ACCEPTE'} ? ' current'
+                               : ' pending')">
+              <div class="dose-step-num" th:text="${i}">1</div>
+              <div>
+                <div class="dose-step-label"
+                     th:text="${i == 1} ? '1ère dose' : (${i} + 'ème dose')">1ère dose</div>
+                <div class="dose-step-date"
+                     th:if="${i <= nbFaites}"
+                     th:text="${#temporals.format(doses[i-1].dateDose,'dd/MM/yyyy')}">01/01/2025</div>
+                <div class="dose-step-date"
+                     th:if="${i > nbFaites and i == nbFaites + 1 and visite.etatConsentement == 'ACCEPTE'}">
+                  À enregistrer
+                </div>
+                <div class="dose-step-date"
+                     th:if="${i > nbFaites + 1 or visite.etatConsentement != 'ACCEPTE'}">
+                  En attente
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Messages flash -->
+          <div th:if="${msgSucces}" class="doses-alert success">
+            <i class="ti ti-circle-check" aria-hidden="true"></i>
+            <span th:text="${msgSucces}"></span>
+          </div>
+          <div th:if="${msgErreur}" class="doses-alert danger">
+            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+            <span th:text="${msgErreur}"></span>
+          </div>
+
+          <!-- ── CAS 1 : Peut enregistrer une dose ── -->
+          <div class="doses-form-card"
+               th:if="${visite.etatConsentement == 'ACCEPTE' and nbFaites < nbTotal}">
+            <h5>
+              <i class="ti ti-needle" aria-hidden="true" style="color:var(--srm-green);"></i>
+              Enregistrer la dose
+              <span th:text="${nbFaites + 1}">1</span>
+              <span style="font-weight:400;color:var(--text-muted);font-size:13px;">
+                sur <span th:text="${nbTotal}">3</span>
+              </span>
+            </h5>
+
+            <!-- Historique doses existantes -->
+            <div th:if="${doses != null and not #lists.isEmpty(doses)}"
+                 style="margin-bottom:16px;padding:12px 14px;
+                        background:var(--bg-page);border-radius:var(--r-md);
+                        border:1px solid var(--border);">
+              <div style="font-size:12px;font-weight:600;color:var(--text-muted);
+                          margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">
+                Doses précédentes
+              </div>
+              <div th:each="d : ${doses}"
+                   style="display:flex;align-items:center;justify-content:space-between;
+                          padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span>
+                  Dose <strong th:text="${d.numeroDose}"></strong>
+                  — <span th:text="${#temporals.format(d.dateDose,'dd/MM/yyyy')}"></span>
+                </span>
+                <form sec:authorize="hasRole('GESTIONNAIRE')"
+                      th:action="@{/campagnes/{cId}/visites/{vId}/doses/{dId}/supprimer(
+                                  cId=${campagneId},vId=${visite.id},dId=${d.id})}"
+                      method="post" style="display:inline;"
+                      onsubmit="return confirm('Supprimer cette dose ?')">
+                  <button type="submit" class="btn-icon btn-icon-danger" title="Supprimer">
+                    <i class="ti ti-trash" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Formulaire nouvelle dose -->
+            <form th:action="@{/campagnes/{cId}/visites/{vId}/doses(cId=${campagneId},vId=${visite.id})}"
+                  th:object="${doseDTO}" method="post">
+              <div class="form-group">
+                <label>
+                  <i class="ti ti-calendar" aria-hidden="true"></i>
+                  Date de la dose *
+                </label>
+                <input type="date" th:field="*{dateDose}" required />
+              </div>
+              <div class="doses-form-actions">
+                <button type="submit" class="btn btn-primary">
+                  <i class="ti ti-check" aria-hidden="true"></i>
+                  Enregistrer la dose <span th:text="${nbFaites + 1}">1</span>
+                </button>
+                <a th:href="@{/employes/{id}(id=${employeId},campagneId=${campagneId})}"
+                   class="btn btn-outline">
+                  <i class="ti ti-arrow-left" aria-hidden="true"></i>
+                  Retour employé
+                </a>
+              </div>
+            </form>
+          </div>
+
+          <!-- ── CAS 2 : Vaccination complète ── -->
+          <div class="doses-alert success"
+               th:if="${visite.etatConsentement == 'ACCEPTE' and nbFaites >= nbTotal}">
+            <i class="ti ti-circle-check" aria-hidden="true" style="font-size:20px;flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:600;margin-bottom:4px;">
+                Vaccination complète — toutes les <span th:text="${nbTotal}"></span> dose(s) enregistrées.
+              </div>
+              <a th:href="@{/employes/{id}(id=${employeId},campagneId=${campagneId})}"
+                 class="btn btn-sm" style="background:#16a34a;color:white;margin-top:8px;display:inline-flex;">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i>
+                Retour employé
+              </a>
+            </div>
+          </div>
+
+          <!-- ── CAS 3 : Consentement refusé ── -->
+          <div class="doses-alert danger"
+               th:if="${visite.etatConsentement == 'REFUSE'}">
+            <i class="ti ti-x" aria-hidden="true" style="font-size:20px;flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:600;margin-bottom:4px;">
+                Consentement refusé — aucune dose ne peut être enregistrée.
+              </div>
+              <a th:href="@{/employes/{id}(id=${employeId},campagneId=${campagneId})}"
+                 class="btn btn-sm btn-outline" style="margin-top:8px;display:inline-flex;">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i>
+                Retour employé
+              </a>
+            </div>
+          </div>
+
+          <!-- ── CAS 4 : Consentement non saisi ── -->
+          <div class="doses-alert warning"
+               th:if="${visite.etatConsentement == null}">
+            <i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:20px;flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:600;margin-bottom:4px;">
+                Consentement non encore saisi. Veuillez d'abord enregistrer le consentement.
+              </div>
+              <a th:href="@{/employes/{id}(id=${employeId},campagneId=${campagneId})}"
+                 class="btn btn-sm btn-outline" style="margin-top:8px;display:inline-flex;">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i>
+                Retour employé
+              </a>
+            </div>
+          </div>
+
+        </th:block>
+
+      </div>
+      <!-- fin doses-page-wrapper -->
+
+    </main>
+  </div>
+</body>
+</html>

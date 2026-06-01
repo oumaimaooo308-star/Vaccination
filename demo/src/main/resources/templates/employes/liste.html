@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+
+<head th:replace="~{layout/header :: head('Employés')}"></head>
+
+<body>
+  <div class="page-wrapper">
+
+    <nav th:replace="~{layout/header :: navbar('employes')}"></nav>
+
+    <main class="main-content">
+
+      <!-- En-tête -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Employés</h1>
+          <p class="page-subtitle" th:text="'Zone ' + ${centreNom} + ' — Annuaire des collaborateurs'">
+            Zone Meknès — Annuaire des collaborateurs
+          </p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-outline" onclick="exporterCSV()">
+            <i class="ti ti-table-export" aria-hidden="true"></i>
+            Exporter
+          </button>
+        </div>
+      </div>
+
+      <div class="table-card">
+
+        <div class="table-toolbar">
+
+          <!-- Filtre campagne : soumet le formulaire au changement -->
+          <form method="get" th:action="@{/employes}" style="display:contents;" id="formFiltreCampagne">
+
+            <div class="search-box">
+              <i class="ti ti-search" aria-hidden="true"></i>
+              <input type="text" id="searchInput" placeholder="Rechercher nom, prenom..." />
+            </div>
+
+            <!-- Filtre ville (consultant seulement) -->
+            <select sec:authorize="hasRole('CONSULTANT')" class="filter-select" id="filterVille">
+              <option value="">Toutes villes</option>
+            </select>
+
+            <!--  : Filtre campagne → recharge la page avec les bons statuts -->
+            <select name="campagneId" class="filter-select" id="filterCampagne"
+              onchange="document.getElementById('formFiltreCampagne').submit()">
+              <option value="" th:selected="${campagneSelectionnee == null}">
+                Toutes les campagnes
+              </option>
+              <option th:each="c : ${campagnes}" th:value="${c.id}" th:text="${c.nomVaccin}"
+                th:selected="${campagneSelectionnee != null and campagneSelectionnee == c.id}">
+                Hépatite B
+              </option>
+            </select>
+
+          </form>
+
+          <!-- Filtre état : actif seulement si campagne sélectionnée -->
+          <select class="filter-select" id="filterEtat"
+            th:classappend="${campagneSelectionnee == null} ? ' filter-disabled' : ''" th:attr="title=${campagneSelectionnee == null} ?
+                    'Sélectionnez d\'abord une campagne' : ''">
+            <option value="">Tous les états</option>
+            <option value="VACCINE">Vacciné</option>
+            <option value="EN_INSTANCE">En instance</option>
+            <option value="NON_VACCINE">Non vacciné</option>
+            <option value="AUCUN">Sans campagne</option>
+          </select>
+
+          <select class="filter-select" id="filterCategorie">
+            <option value="">Catégorie VF</option>
+            <option value="VF-A">VF-A</option>
+            <option value="VF-B">VF-B</option>
+            <option value="VF-C">VF-C</option>
+          </select>
+
+          <select class="filter-select" id="filterType">
+            <option value="">DC / DP</option>
+            <option value="DC">DC</option>
+            <option value="DP">DP</option>
+          </select>
+
+        </div>
+
+        <!-- Message si filtre campagne actif -->
+        <div th:if="${campagneSelectionnee != null}" style="padding:8px 18px; font-size:12.5px;
+                    color:var(--text-muted); border-bottom:1px solid var(--border);">
+          <i class="ti ti-filter" aria-hidden="true"></i>
+          États affichés pour la campagne sélectionnée ·
+          <a th:href="@{/employes}" style="color:var(--srm-green); font-weight:600;">
+            × Voir tous
+          </a>
+        </div>
+
+        <!-- Compteurs statuts -->
+        <div class="table-stats">
+          <div class="stat-pill">
+            <span class="stat-dot" style="background:#888;"></span>
+            Total : <strong th:text="${totalEmployes}">0</strong> employés
+          </div>
+          <div class="stat-pill">
+            <span class="stat-dot" style="background:var(--s-vaccine-dot);"></span>
+            Vaccinés :
+            <strong th:text="${nbVaccines}" style="color:var(--s-vaccine-tx);">0</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-dot" style="background:var(--s-instance-dot);"></span>
+            En instance :
+            <strong th:text="${nbEnInstance}" style="color:var(--s-instance-tx);">0</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-dot" style="background:var(--s-nonvax-dot);"></span>
+            Non vaccinés :
+            <strong th:text="${nbNonVaccines}" style="color:var(--s-nonvax-tx);">0</strong>
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div class="empty-state" th:if="${#lists.isEmpty(employes)}">
+          <i class="ti ti-users" aria-hidden="true"></i>
+          <h3>Aucun employé trouvé</h3>
+          <p>Aucun collaborateur n'est enregistré dans votre zone.</p>
+        </div>
+
+        <!-- Tableau -->
+        <div th:unless="${#lists.isEmpty(employes)}" style="overflow-x:auto;">
+          <table id="employesTable">
+            <thead>
+              <tr>
+                <th>DC/DP</th>
+                <th>NOM ET PRÉNOM</th>
+                <th>MATRICULE</th>
+                <th>DATE RECRUT.</th>
+                <th>DATE NAISS.</th>
+                <th>ÂGE</th>
+                <th>ANCIENNETÉ</th>
+                <th>DATE RETRAITE</th>
+                <th>CAT. VF</th>
+                <th>SEXE</th>
+                <th>ACTIVITÉ</th>
+                <th>POSTE</th>
+                <th>TÉLÉPHONE</th>
+                <th th:if="${campagneSelectionnee != null}">ÉTAT</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="e : ${employes}" th:data-nom="${e.nomComplet}" th:data-cat="${e.categorieVF}"
+                th:data-type="${e.typeDC}" th:data-statut="${statutParEmploye != null and statutParEmploye[e.id] != null
+                                    ? statutParEmploye[e.id] : 'AUCUN'}" th:data-ville="${e.centre.ville}"
+                style="cursor:pointer;"
+                th:onclick="|window.location.href='@{/employes/{id}(id=${e.id},campagneId=${campagneSelectionnee})}'|">
+
+                <!-- DC ou DP -->
+                <td onclick="event.stopPropagation();">
+                  <span class="dc-dp" th:classappend="${e.typeDC == 'DC'} ? ' dc' : ' dp'"
+                    th:text="${e.typeDC}">DC</span>
+                </td>
+
+                <!-- Nom + avatar -->
+                <td>
+                  <div style="display:flex; align-items:center; gap:9px;">
+                    <div style="width:30px;height:30px;border-radius:50%;
+                               background:var(--srm-green-light);flex-shrink:0;
+                               display:flex;align-items:center;justify-content:center;
+                               font-size:11px;font-weight:700;color:var(--srm-green);" th:text="${e.initiales}">HA
+                    </div>
+                    <a th:href="@{/employes/{id}(id=${e.id},campagneId=${campagneSelectionnee})}" class="td-name"
+                      th:text="${e.nomComplet}" onclick="event.stopPropagation();">
+                      Hassan Alami
+                    </a>
+                  </div>
+                </td>
+
+                <td style="font-family:'DM Mono',monospace;font-size:12.5px;" th:text="${e.matricule}">EMP-001</td>
+                <td th:text="${#temporals.format(e.dateRecrutement,'dd/MM/yyyy')}">01/06/2005</td>
+                <td th:text="${#temporals.format(e.dateNaissance,'dd/MM/yyyy')}">14/03/1978</td>
+                <td style="font-weight:600;" th:text="${e.age} + ' ans'">47 ans</td>
+                <td th:text="${e.anciennete} + ' ans'">20 ans</td>
+                <td th:text="${#temporals.format(e.dateRetraite,'dd/MM/yyyy')}">14/03/2041</td>
+                <td th:text="${e.categorieVF}">VF-A</td>
+                <td th:text="${e.sexe == 'M'} ? 'M' : 'F'">M</td>
+                <td th:text="${e.activite}">Exploitation</td>
+                <td th:text="${e.posteTravaille}">Tech. senior</td>
+                <td style="font-family:'DM Mono',monospace;font-size:12px;" th:text="${e.telephone}">0661234567</td>
+
+                <td th:if="${campagneSelectionnee != null}" onclick="event.stopPropagation();">
+                  <span th:with="st=${statutParEmploye != null ? statutParEmploye[e.id] : null}">
+                    <span th:if="${st == 'VACCINE'}" class="badge badge-vaccine">Vacciné</span>
+                    <span th:if="${st == 'EN_INSTANCE'}" class="badge badge-instance">En instance</span>
+                    <span th:if="${st == 'NON_VACCINE'}" class="badge badge-nonvaccine">Non vacciné</span>
+                    <span th:if="${st == 'AUCUN' or st == null}" style="color:var(--text-muted);font-size:12px;">Hors
+                      campagne</span>
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td onclick="event.stopPropagation();">
+                  <div class="actions">
+                    <!-- Fiche employé — conserve le campagneId pour rester dans le contexte -->
+                    <a th:href="@{/employes/{id}(id=${e.id},campagneId=${campagneSelectionnee})}" class="btn-icon"
+                      title="Voir la fiche">
+                      <i class="ti ti-eye" aria-hidden="true"></i>
+                    </a>
+                  </div>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:replace="~{layout/pagination :: pagination(
+    ${currentPage},
+    ${totalPages},
+    '/employes',
+    ${campagneSelectionnee != null ? 'campagneId=' + campagneSelectionnee : ''})}">
+        </div>
+      </div><!-- fin table-card -->
+
+    </main>
+  </div>
+
+  <style>
+    /* Filtre désactivé visuellement quand pas de campagne sélectionnée */
+    .filter-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  </style>
+
+  <script>
+    // ── Peuplement dynamique du filtre "Villes" ────────────────────────────
+    const villes = [...new Set(
+      [...document.querySelectorAll('#employesTable tbody tr')]
+        .map(r => r.dataset.ville).filter(Boolean)
+    )];
+    const selectVille = document.getElementById('filterVille');
+    if (selectVille) {
+      villes.sort().forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v; opt.textContent = v;
+        selectVille.appendChild(opt);
+      });
+    }
+
+    // ── Fonction de filtrage côté client ──────────────────────────────────
+    // NB : le filtre État ne filtre que les lignes déjà chargées.
+    //      Les statuts réels sont calculés côté serveur selon campagneId.
+    function filtrer() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const ville = selectVille ? selectVille.value : '';
+      const cat = document.getElementById('filterCategorie').value;
+      const etat = document.getElementById('filterEtat').value;
+      const type = document.getElementById('filterType').value;
+
+      document.querySelectorAll('#employesTable tbody tr').forEach(row => {
+        const nom = (row.dataset.nom || '').toLowerCase();
+        const rVille = row.dataset.ville || '';
+        const rCat = row.dataset.cat || '';
+        const rEtat = row.dataset.statut || '';
+        const rType = row.dataset.type || '';
+
+        const ok =
+          (!q || nom.includes(q)) &&
+          (!ville || rVille === ville) &&
+          (!cat || rCat === cat) &&
+          (!etat || rEtat === etat) &&
+          (!type || rType === type);
+
+        row.style.display = ok ? '' : 'none';
+      });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filtrer);
+    if (selectVille) selectVille.addEventListener('change', filtrer);
+    document.getElementById('filterCategorie').addEventListener('change', filtrer);
+    document.getElementById('filterEtat').addEventListener('change', filtrer);
+    document.getElementById('filterType').addEventListener('change', filtrer);
+
+    // ── Export CSV ────────────────────────────────────────────────────────
+    function exporterCSV() {
+      const rows = document.querySelectorAll('#employesTable tr');
+      const lines = [...rows].map(r =>
+        [...r.querySelectorAll('th,td')]
+          .map(c => '"' + c.innerText.replace(/"/g, '""') + '"')
+          .join(',')
+      );
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'employes.csv'; a.click();
+    }
+  </script>
+
+</body>
+
+</html>

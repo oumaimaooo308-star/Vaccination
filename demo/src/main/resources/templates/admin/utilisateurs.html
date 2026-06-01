@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+
+<head th:replace="~{layout/header :: head('Administration')}"></head>
+
+<body>
+  <div class="page-wrapper">
+    <nav th:replace="~{layout/header :: navbar('admin')}"></nav>
+
+    <main class="main-content">
+
+      <!-- En-tête -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Administration</h1>
+          <p class="page-subtitle">Gestion des utilisateurs — Gestionnaires et Consultants</p>
+        </div>
+
+        <!-- ▼ CORRECTION : les deux boutons côte à côte dans un flex container -->
+        <div class="admin-header-actions">
+          <button class="btn btn-primary" data-modal="modalGestionnaire">
+            <i class="ti ti-user-plus" aria-hidden="true"></i>
+            Nouveau gestionnaire
+          </button>
+          <button class="btn btn-outline" data-modal="modalConsultant">
+            <i class="ti ti-user-plus" aria-hidden="true"></i>
+            Nouveau consultant
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages flash -->
+      <div th:if="${msgSucces}"
+           style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
+                  padding:12px 16px;color:#16a34a;font-size:13.5px;margin-bottom:16px;
+                  display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        <span th:text="${msgSucces}"></span>
+      </div>
+      <div th:if="${msgErreur}"
+           style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;
+                  padding:12px 16px;color:#dc2626;font-size:13.5px;margin-bottom:16px;
+                  display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-alert-circle" aria-hidden="true"></i>
+        <span th:text="${msgErreur}"></span>
+      </div>
+
+      <!-- Tableau utilisateurs -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <div class="table-card-title">
+            <i class="ti ti-users" aria-hidden="true"></i>
+            Utilisateurs du système
+          </div>
+          <span style="font-size:12px;color:var(--text-muted);">
+            <strong th:text="${#lists.size(utilisateurs)}">0</strong> utilisateur(s)
+          </span>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>UTILISATEUR</th>
+                <th>RÔLE</th>
+                <th>CENTRE</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="u : ${utilisateurs}">
+
+                <!-- Avatar + nom -->
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:36px;height:36px;border-radius:50%;
+                                display:flex;align-items:center;justify-content:center;
+                                font-size:13px;font-weight:700;color:white;flex-shrink:0;"
+                         th:style="${u.role == 'ROLE_ADMIN'}
+                             ? 'background:#7c3aed;'
+                             : (${u.role == 'ROLE_GESTIONNAIRE'}
+                                 ? 'background:var(--srm-green);'
+                                 : 'background:#0ea5e9;')"
+                         th:text="${#strings.substring(u.username,0,2).toUpperCase()}">GE</div>
+                    <div>
+                      <div style="font-weight:600;font-size:13.5px;" th:text="${u.username}"></div>
+                      <div style="font-size:11.5px;color:var(--text-muted);"
+                           th:text="'ID : ' + ${u.id}"></div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Badge rôle -->
+                <td>
+                  <span th:if="${u.role == 'ROLE_ADMIN'}"
+                        style="font-size:11.5px;font-weight:600;padding:3px 10px;
+                               border-radius:20px;background:#f3e8ff;color:#7c3aed;">
+                    Administrateur
+                  </span>
+                  <span th:if="${u.role == 'ROLE_GESTIONNAIRE'}"
+                        style="font-size:11.5px;font-weight:600;padding:3px 10px;
+                               border-radius:20px;
+                               background:var(--s-vaccine-bg);color:var(--s-vaccine-tx);">
+                    Gestionnaire
+                  </span>
+                  <span th:if="${u.role == 'ROLE_CONSULTANT'}"
+                        style="font-size:11.5px;font-weight:600;padding:3px 10px;
+                               border-radius:20px;background:#e0f2fe;color:#0369a1;">
+                    Consultant
+                  </span>
+                </td>
+
+                <!-- Centre -->
+                <td style="font-size:13px;">
+                  <th:block th:with="estGestionnaire=${u instanceof T(com.example.demo.entity.Gestionnaire)}">
+                    <span th:if="${estGestionnaire and u.centre != null}"
+                          th:text="${u.centre.ville}"></span>
+                    <span th:unless="${estGestionnaire and u.centre != null}"
+                          style="color:var(--text-muted);">—</span>
+                  </th:block>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+
+                    <!-- Réinitialiser MDP -->
+                    <button th:if="${u.role != 'ROLE_ADMIN'}"
+                            class="btn-icon btn-reinit"
+                            th:data-id="${u.id}"
+                            th:data-username="${u.username}"
+                            title="Réinitialiser mot de passe">
+                      <i class="ti ti-key" aria-hidden="true"></i>
+                    </button>
+
+                    <!-- Changer centre (Gestionnaire seulement) -->
+                    <th:block th:with="estGest=${u instanceof T(com.example.demo.entity.Gestionnaire)}">
+                      <button th:if="${estGest}"
+                              class="btn-icon btn-changer-centre"
+                              th:data-id="${u.id}"
+                              th:data-username="${u.username}"
+                              th:data-centre="${u.centre != null ? u.centre.id : ''}"
+                              title="Changer de centre">
+                        <i class="ti ti-map-pin" aria-hidden="true"></i>
+                      </button>
+                    </th:block>
+
+                    <!-- Supprimer -->
+                    <form th:if="${u.role != 'ROLE_ADMIN'}"
+                          th:action="@{/admin/utilisateurs/{id}/supprimer(id=${u.id})}"
+                          method="post"
+                          class="form-supprimer">
+                      <button type="submit"
+                              class="btn-icon btn-icon-danger btn-supprimer"
+                              th:data-username="${u.username}"
+                              title="Supprimer">
+                        <i class="ti ti-trash" aria-hidden="true"></i>
+                      </button>
+                    </form>
+
+                  </div>
+                </td>
+              </tr>
+
+              <tr th:if="${#lists.isEmpty(utilisateurs)}">
+                <td colspan="4"
+                    style="text-align:center;padding:40px;color:var(--text-muted);">
+                  Aucun utilisateur trouvé.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ══ MODAL — Nouveau gestionnaire ══ -->
+  <div id="modalGestionnaire"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+              z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:var(--r-lg);
+                padding:28px 32px;width:100%;max-width:440px;
+                box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">
+          <i class="ti ti-user-plus" style="color:var(--srm-green);"></i>
+          Nouveau gestionnaire
+        </div>
+        <button data-fermer="modalGestionnaire"
+                style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);">×</button>
+      </div>
+      <form th:action="@{/admin/utilisateurs/gestionnaire}" method="post">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Nom d'utilisateur *</label>
+          <input type="text" name="username" required placeholder="ex: gestionnaire.fes"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                        border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                        color:var(--text-primary);box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Mot de passe *</label>
+          <input type="password" name="password" required placeholder="Minimum 6 caractères"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                        border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                        color:var(--text-primary);box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Centre *</label>
+          <select name="centreId" required
+                  style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                         border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                         color:var(--text-primary);box-sizing:border-box;">
+            <option value="">-- Choisir un centre --</option>
+            <option th:each="c : ${centres}" th:value="${c.id}" th:text="${c.ville}">Meknès</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" data-fermer="modalGestionnaire" class="btn btn-outline">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ti ti-check" aria-hidden="true"></i> Créer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══ MODAL — Nouveau consultant ══ -->
+  <div id="modalConsultant"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+              z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:var(--r-lg);
+                padding:28px 32px;width:100%;max-width:440px;
+                box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">
+          <i class="ti ti-user-plus" style="color:#0ea5e9;"></i>
+          Nouveau consultant
+        </div>
+        <button data-fermer="modalConsultant"
+                style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);">×</button>
+      </div>
+      <form th:action="@{/admin/utilisateurs/consultant}" method="post">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Nom d'utilisateur *</label>
+          <input type="text" name="username" required placeholder="ex: consultant.rh"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                        border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                        color:var(--text-primary);box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Mot de passe *</label>
+          <input type="password" name="password" required placeholder="Minimum 6 caractères"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                        border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                        color:var(--text-primary);box-sizing:border-box;" />
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" data-fermer="modalConsultant" class="btn btn-outline">Annuler</button>
+          <button type="submit" class="btn btn-primary" style="background:#0ea5e9;border-color:#0ea5e9;">
+            <i class="ti ti-check" aria-hidden="true"></i> Créer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══ MODAL — Réinitialiser mot de passe ══ -->
+  <div id="modalMdp"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+              z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:var(--r-lg);
+                padding:28px 32px;width:100%;max-width:400px;
+                box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">
+          <i class="ti ti-key" style="color:var(--s-instance-tx);"></i>
+          Réinitialiser le mot de passe
+        </div>
+        <button data-fermer="modalMdp"
+                style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);">×</button>
+      </div>
+      <p id="modalMdpLabel" style="font-size:13.5px;color:var(--text-secondary);margin-bottom:16px;"></p>
+      <form id="formMdp" method="post">
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Nouveau mot de passe *</label>
+          <input type="password" name="nouveauMdp" id="inputNouveauMdp" required
+                 placeholder="Minimum 6 caractères"
+                 style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                        border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                        color:var(--text-primary);box-sizing:border-box;" />
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" data-fermer="modalMdp" class="btn btn-outline">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ti ti-device-floppy" aria-hidden="true"></i> Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══ MODAL — Changer centre ══ -->
+  <div id="modalCentre"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+              z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:var(--r-lg);
+                padding:28px 32px;width:100%;max-width:400px;
+                box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">
+          <i class="ti ti-map-pin" style="color:var(--srm-green);"></i>
+          Changer le centre
+        </div>
+        <button data-fermer="modalCentre"
+                style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);">×</button>
+      </div>
+      <p id="modalCentreLabel" style="font-size:13.5px;color:var(--text-secondary);margin-bottom:16px;"></p>
+      <form id="formCentre" method="post">
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">
+            Nouveau centre *</label>
+          <select name="centreId" id="selectNouveauCentre" required
+                  style="width:100%;padding:8px 12px;border:1px solid var(--border);
+                         border-radius:8px;font-size:13.5px;background:var(--bg-page);
+                         color:var(--text-primary);box-sizing:border-box;">
+            <option value="">-- Choisir un centre --</option>
+            <option th:each="c : ${centres}" th:value="${c.id}" th:text="${c.ville}">Meknès</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" data-fermer="modalCentre" class="btn btn-outline">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ti ti-check" aria-hidden="true"></i> Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function ouvrirModal(id) {
+      const m = document.getElementById(id);
+      if (!m) return;
+      m.style.display = 'flex';
+      m.addEventListener('click', function handler(e) {
+        if (e.target === m) { fermerModal(id); m.removeEventListener('click', handler); }
+      });
+    }
+    function fermerModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('[data-modal]').forEach(function (btn) {
+        btn.addEventListener('click', function () { ouvrirModal(this.getAttribute('data-modal')); });
+      });
+      document.querySelectorAll('[data-fermer]').forEach(function (btn) {
+        btn.addEventListener('click', function () { fermerModal(this.getAttribute('data-fermer')); });
+      });
+      document.querySelectorAll('.btn-reinit').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const userId   = this.getAttribute('data-id');
+          const username = this.getAttribute('data-username');
+          document.getElementById('modalMdpLabel').textContent = 'Nouveau mot de passe pour : ' + username;
+          document.getElementById('formMdp').action = '/admin/utilisateurs/' + userId + '/reinitialiser';
+          document.getElementById('inputNouveauMdp').value = '';
+          ouvrirModal('modalMdp');
+        });
+      });
+      document.querySelectorAll('.btn-changer-centre').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const userId   = this.getAttribute('data-id');
+          const username = this.getAttribute('data-username');
+          const centreId = this.getAttribute('data-centre');
+          document.getElementById('modalCentreLabel').textContent = 'Changer le centre de : ' + username;
+          document.getElementById('formCentre').action = '/admin/utilisateurs/' + userId + '/changer-centre';
+          const select = document.getElementById('selectNouveauCentre');
+          for (let opt of select.options) { opt.selected = (opt.value === centreId); }
+          ouvrirModal('modalCentre');
+        });
+      });
+      document.querySelectorAll('.btn-supprimer').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          const username = this.getAttribute('data-username');
+          if (!confirm('Supprimer l\'utilisateur « ' + username + ' » ?')) { e.preventDefault(); }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

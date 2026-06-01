@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+
+<head th:replace="~{layout/header :: head('Visites')}"></head>
+
+<body>
+  <div class="page-wrapper">
+    <nav th:replace="~{layout/header :: navbar('campagnes')}"></nav>
+
+    <main class="main-content">
+
+      <!-- Fil d'Ariane -->
+      <div class="breadcrumb">
+        <a th:href="@{/campagnes}">Campagnes</a>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span th:text="${campagne.nomVaccin}">Hépatite B</span>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+        <span>Visites</span>
+      </div>
+
+      <!-- ── En-tête visites — reorganisé ── -->
+      <div class="visites-header">
+
+        <div class="visites-header-left">
+          <h2 th:text="'Visites — ' + ${campagne.nomVaccin}">Visites — Hépatite B</h2>
+          <!-- Meta-pills : infos compactes -->
+          <div class="visites-header-meta">
+            <span class="visites-meta-pill">
+              <i class="ti ti-needle" aria-hidden="true"></i>
+              <span th:text="${campagne.nbDose} + ' dose(s) max'">3 doses</span>
+            </span>
+            <span class="visites-meta-pill">
+              <i class="ti ti-users" aria-hidden="true"></i>
+              <span th:text="${#lists.size(visites)} + ' employé(s)'">0 employés</span>
+            </span>
+            <span class="visites-meta-pill">
+              <i class="ti ti-map-pin" aria-hidden="true"></i>
+              <span th:text="${campagne.centre.ville}">Meknès</span>
+            </span>
+            <!-- Compteurs rapides -->
+            <span class="badge badge-vaccine" style="font-size:11px;">
+              Vaccinés :
+              <strong th:text="${visites.?[etatVaccination == 'VACCINE'].size()}">0</strong>
+            </span>
+            <span class="badge badge-instance" style="font-size:11px;">
+              En instance :
+              <strong th:text="${visites.?[etatVaccination == 'EN_INSTANCE'].size()}">0</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Boutons d'action en-tête -->
+        <div class="visites-header-actions">
+          <a sec:authorize="hasRole('GESTIONNAIRE')" th:href="@{/campagnes/{id}/ajouter-employes(id=${campagne.id})}"
+            class="btn btn-outline btn-sm">
+            <i class="ti ti-user-plus" aria-hidden="true"></i>
+            Affecter employés
+          </a>
+          <a th:href="@{/campagnes/{id}(id=${campagne.id})}" class="btn btn-outline btn-sm">
+            <i class="ti ti-info-circle" aria-hidden="true"></i>
+            Détail
+          </a>
+          <a th:href="@{/campagnes}" class="btn btn-outline btn-sm">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i>
+            Retour
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Messages flash -->
+      <div th:if="${msgSucces}" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
+                  padding:12px 16px;color:#16a34a;font-size:13.5px;margin-bottom:16px;
+                  display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        <span th:text="${msgSucces}"></span>
+      </div>
+      <div th:if="${msgErreur}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;
+                  padding:12px 16px;color:#dc2626;font-size:13.5px;margin-bottom:16px;
+                  display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <span th:text="${msgErreur}"></span>
+      </div>
+
+      <!-- ── Tableau ── -->
+      <div class="table-card">
+
+        <div class="empty-state" th:if="${#lists.isEmpty(visites)}">
+          <i class="ti ti-mood-empty" style="font-size:36px;opacity:.3;" aria-hidden="true"></i>
+          <h3>Aucun employé affecté</h3>
+          <p>Aucun collaborateur n'a encore été ajouté à cette campagne.</p>
+          <a sec:authorize="hasRole('GESTIONNAIRE')" th:href="@{/campagnes/{id}/ajouter-employes(id=${campagne.id})}"
+            class="btn btn-outline btn-sm" style="margin-top:10px;">
+            <i class="ti ti-user-plus" aria-hidden="true"></i>
+            Affecter des employés
+          </a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(visites)}" style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>EMPLOYÉ</th>
+                <th>MATRICULE</th>
+                <th>DIRECTION</th>
+                <th>CONSENTEMENT</th>
+                <th>DATE DÉCISION</th>
+                <th>STATUT</th>
+                <th>DOSES</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="v : ${visites}">
+
+                <!-- Employé + avatar -->
+                <td>
+                  <div style="display:flex;align-items:center;gap:9px;">
+                    <div style="width:30px;height:30px;border-radius:50%;
+                               background:var(--srm-green-light);flex-shrink:0;
+                               display:flex;align-items:center;justify-content:center;
+                               font-size:11px;font-weight:700;color:var(--srm-green);" th:text="${#strings.substring(v.employe.nom,0,1)
+                                  + #strings.substring(v.employe.prenom,0,1)}">HA</div>
+                    <span style="font-weight:600;font-size:13.5px;"
+                      th:text="${v.employe.nom + ' ' + v.employe.prenom}">Hassan Alami</span>
+                  </div>
+                </td>
+
+                <td style="font-family:'DM Mono',monospace;font-size:12px;" th:text="${v.employe.matricule}">EMP-001
+                </td>
+
+                <td style="font-size:13px;" th:text="${v.employe.direction}">DSI</td>
+
+                <!-- Consentement -->
+                <td>
+                  <span class="badge badge-vaccine" th:if="${v.etatConsentement == 'ACCEPTE'}">Accepté</span>
+                  <span class="badge badge-nonvaccine" th:if="${v.etatConsentement == 'REFUSE'}">Refusé</span>
+                  <span style="color:var(--text-muted);font-size:12px;" th:if="${v.etatConsentement == null}">Non
+                    saisi</span>
+                </td>
+
+                <!-- Date décision -->
+                <td style="font-size:13px;" th:text="${v.dateDecision != null
+                               ? #temporals.format(v.dateDecision,'dd/MM/yyyy')
+                               : '—'}">—</td>
+
+                <!-- Statut -->
+                <td>
+                  <span class="badge badge-vaccine" th:if="${v.etatVaccination == 'VACCINE'}">Vacciné</span>
+                  <span class="badge badge-nonvaccine" th:if="${v.etatVaccination == 'NON_VACCINE'}">Non vacciné</span>
+                  <span class="badge badge-instance" th:if="${v.etatVaccination == 'EN_INSTANCE'}">En instance</span>
+                </td>
+
+                <!-- Doses : points + compteur -->
+                <td>
+                  <div style="display:flex;gap:4px;align-items:center;">
+                    <span th:each="i : ${#numbers.sequence(1, campagne.nbDose)}"
+                      th:style="${i <= (v.doses != null ? #lists.size(v.doses) : 0)}
+                              ? 'width:9px;height:9px;border-radius:50%;background:var(--s-vaccine-dot);display:inline-block;'
+                              : 'width:9px;height:9px;border-radius:50%;border:1.5px solid var(--border-strong);display:inline-block;'">
+                    </span>
+                    <span style="font-size:11px;color:var(--text-muted);margin-left:3px;"
+                      th:text="${v.doses != null ? #lists.size(v.doses) : 0} + '/' + ${campagne.nbDose}"></span>
+                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div style="display:flex;gap:6px;align-items:center;">
+
+                    <!-- Fiche employé -->
+                    <a th:href="@{/employes/{id}(id=${v.employe.id},campagneId=${campagne.id})}" class="btn-icon"
+                      title="Fiche employé">
+                      <i class="ti ti-user" aria-hidden="true"></i>
+                    </a>
+
+                    <!-- Saisir consentement -->
+                    <a sec:authorize="hasRole('GESTIONNAIRE')"
+                      th:if="${v.etatConsentement == null and v.etatVaccination == 'EN_INSTANCE'}"
+                      th:href="@{/campagnes/{cId}/visites/{vId}/consentement(cId=${campagneId},vId=${v.id})}"
+                      class="btn-icon" title="Saisir consentement" style="color:var(--s-instance-tx);">
+                      <i class="ti ti-writing" aria-hidden="true"></i>
+                    </a>
+
+                    <!-- Enregistrer dose -->
+                    <a sec:authorize="hasRole('GESTIONNAIRE')" th:if="${v.etatConsentement == 'ACCEPTE'
+                              and (v.doses == null ? 0 : #lists.size(v.doses)) < campagne.nbDose}"
+                      th:href="@{/campagnes/{cId}/visites/{vId}/doses(cId=${campagneId},vId=${v.id})}"
+                      class="btn btn-sm btn-primary" title="Enregistrer dose" style="font-size:12px;padding:4px 10px;">
+                      <i class="ti ti-needle" aria-hidden="true"></i>
+                      Dose <span th:text="${(v.doses == null ? 0 : #lists.size(v.doses)) + 1}"></span>
+                    </a>
+
+                    <!-- Supprimer visite -->
+                    <form sec:authorize="hasRole('GESTIONNAIRE')"
+                      th:action="@{/campagnes/{cId}/visites/{vId}/supprimer(cId=${campagneId},vId=${v.id})}"
+                      method="post" class="form-suppr-visite">
+                      <button type="submit" class="btn-icon btn-icon-danger btn-suppr-visite"
+                        th:data-nom="${v.employe.nom + ' ' + v.employe.prenom}" title="Retirer de la campagne">
+                        <i class="ti ti-user-minus" aria-hidden="true"></i>
+                      </button>
+                    </form>
+
+                  </div>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div th:replace="~{layout/pagination :: pagination(
+    ${currentPage},
+    ${totalPages},
+    '/campagnes/' + ${campagneId} + '/visites',
+    '')}">
+        </div>
+
+      </div>
+      <!-- fin table-card -->
+
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.btn-suppr-visite').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          const nom = this.getAttribute('data-nom');
+          if (!confirm('Retirer « ' + nom + ' » de cette campagne ?')) {
+            e.preventDefault();
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+
+</html>

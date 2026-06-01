@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+
+
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle} + ' | SRM Vaccination'">SRM Vaccination</title>
+    <link rel="stylesheet" th:href="@{/css/srm.css}" />
+    <link rel="stylesheet" th:href="@{/css/forms.css}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" th:href="@{/css/pages.css}" />
+        <!-- Bootstrap JS BUNDLE (inclut Popper) — obligatoire pour les tabs et modals Bootstrap -->
+ <!--   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>-->
+</head>
+
+<!-- Fragment NAVBAR -->
+<nav th:fragment="navbar(activePage)" class="navbar">
+
+    <a href="/home" class="navbar-brand">
+        <img th:src="@{/images/srm-logo.png}" alt="SRM" style="height:42px; width:auto; object-fit:contain;" />
+        <span class="navbar-title" style="margin-left:8px;">Vaccination</span>
+    </a>
+
+    <!-- Liens de navigation -->
+    <ul class="navbar-nav">
+        <li sec:authorize="hasAnyRole('GESTIONNAIRE','CONSULTANT')">
+             <a th:href="@{/home}" th:classappend="${activePage == 'home'} ? ' active'" class="nav-link">
+                <i class="ti ti-layout-dashboard"></i>
+                Tableau de bord
+            </a>
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/utilisateurs}" th:classappend="${activePage == 'admin'} ? ' active'" class="nav-link">
+                <i class="ti ti-shield-lock"></i>
+                Administration
+            </a>
+        </li>
+        <li sec:authorize="hasAnyRole('GESTIONNAIRE','CONSULTANT')">
+            <a th:href="@{/campagnes}" th:classappend="${activePage == 'campagnes'} ? ' active'" class="nav-link">
+                <i class="ti ti-vaccine"></i>
+                Mes vaccins
+            </a>
+        </li>
+        <li sec:authorize="hasAnyRole('GESTIONNAIRE','CONSULTANT')">
+            <a th:href="@{/employes}" th:classappend="${activePage == 'employes'} ? ' active'" class="nav-link">
+                <i class="ti ti-users"></i>
+                Employés
+            </a>
+        </li>
+    </ul>
+
+    <!-- Zone droite : toutes les données viennent de la BD via GlobalControllerAdvice -->
+    <div class="navbar-right">
+
+       
+        <div class="zone-badge">
+            <span th:text="'Zone ' + ${centreNom}"></span>
+        </div>
+
+        <div class="user-info">
+            <span class="user-name" th:text="${userName}"></span>
+            <span class="user-role" th:text="${userRole}"></span>
+        </div>
+
+    
+        <div class="user-avatar" th:text="${userInitiales}"></div>
+
+        <form th:action="@{/logout}" method="post" style="margin:0;">
+            <button type="submit" class="logout-btn" title="Déconnexion"
+                style="background:none; border:none; cursor:pointer; padding:0;">
+                <i class="ti ti-logout" style="font-size:16px;"></i>
+            </button>
+        </form>
+
+    </div>
+</nav>
+
+</html>

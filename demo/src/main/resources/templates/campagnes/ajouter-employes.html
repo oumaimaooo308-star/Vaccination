@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Affecter des employés')}"></head>
+
+<body>
+  <div class="page-wrapper">
+    <nav th:replace="~{layout/header :: navbar('campagnes')}"></nav>
+    <main class="main-content">
+
+      <div class="breadcrumb">
+        <a th:href="@{/campagnes}">Campagnes</a>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);"></i>
+        <span th:text="${campagne.nomVaccin}">Campagne</span>
+        <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);"></i>
+        <span>Affecter des employés</span>
+      </div>
+
+      <div class="page-header" style="margin-top:16px;">
+        <div>
+          <h1 class="page-title">Affecter des employés</h1>
+          <p class="page-subtitle"
+            th:text="'Campagne : ' + ${campagne.nomVaccin} + ' — ' + ${campagne.nbDose} + ' dose(s) max'">
+            Campagne
+          </p>
+        </div>
+      </div>
+
+      <!--
+    FORMULAIRE PRINCIPAL
+  -->
+      <form th:action="@{/campagnes/{id}/ajouter-employes(id=${campagne.id})}" method="post"
+        enctype="multipart/form-data">
+
+        <!--
+      SECTION 1 — AFFECTATION PAR DIRECTION
+     
+    -->
+        <div class="detail-card" style="margin-bottom:20px;">
+          <div class="detail-card-title">
+            <i class="ti ti-building" aria-hidden="true"></i>
+            Affectation rapide par direction
+          </div>
+
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+            Cochez une ou plusieurs directions pour affecter <strong>tous leurs employés</strong>
+            à la campagne en une seule fois.
+          </p>
+
+          <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+            <div th:each="dir : ${directions}" style="display:flex; align-items:center; gap:8px;
+                    border:1.5px solid var(--border); border-radius:8px;
+                    padding:8px 14px; cursor:pointer; transition:border-color .15s;"
+              onclick="this.querySelector('input').click()">
+              <input type="checkbox" name="directionsSelectionnees" th:value="${dir}"
+                style="accent-color:var(--srm-green); cursor:pointer;" />
+              <span style="font-size:13.5px; font-weight:500;" th:text="${dir}">Direction</span>
+            </div>
+            <p th:if="${#lists.isEmpty(directions)}" style="font-size:13px; color:var(--text-muted);">
+              Aucune direction trouvée pour ce centre.
+            </p>
+          </div>
+        </div>
+
+        <!--SECTION 2 — IMPORT FICHIER CSV / EXCEL-->
+        <div class="detail-card" style="margin-bottom:20px;">
+          <div class="detail-card-title">
+            <i class="ti ti-file-import" aria-hidden="true"></i>
+            Import fichier Excel / CSV
+          </div>
+
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+            Importez un fichier <strong>.xlsx</strong> ou <strong>.csv</strong>
+            contenant une colonne <code>matricule</code>.
+            Les matricules non trouvés dans la base seront ignorés.
+          </p>
+
+          <input type="file" name="fichierImport" accept=".xlsx,.xls,.csv" style="display:block; margin-bottom:8px;" />
+
+          <p style="font-size:12px; color:var(--text-muted);">
+            Structure attendue : première ligne = en-tête avec au moins une colonne nommée
+            <code>matricule</code>.
+          </p>
+          <a th:href="@{/campagnes/modele-import}" style="font-size:12.5px; color:var(--srm-green); font-weight:600;
+          display:inline-flex; align-items:center; gap:6px; margin-top:4px;">
+            <i class="ti ti-download"></i>
+            Télécharger le fichier modèle avec les matricules du centre
+          </a>
+        </div>
+
+        <!--      SECTION 3 — AFFECTATION INDIVIDUELLE (cases à cocher par employé)-->
+        <div class="table-card">
+          <div class="table-card-header">
+            <div class="table-card-title">
+              <i class="ti ti-users" aria-hidden="true"></i>
+              Sélection individuelle
+              <!-- Compteur mis à jour en JS -->
+              <span id="compteur" style="margin-left:10px; font-size:12px; font-weight:500;
+                       color:var(--srm-green); background:var(--srm-green-light);
+                       padding:2px 10px; border-radius:20px;">
+                0 sélectionné(s)
+              </span>
+            </div>
+
+            <!-- Filtre texte temps réel -->
+            <input type="text" id="filtreRecherche" placeholder="Rechercher un employé…" oninput="filtrer()" style="border:1px solid var(--border); border-radius:8px;
+                      padding:6px 12px; font-size:13px; width:240px;" />
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="padding:10px; text-align:left; width:36px;">
+                    <!-- Cocher/décocher tout -->
+                    <input type="checkbox" id="toutCocher" onchange="toutCocherFn(this)"
+                      style="accent-color:var(--srm-green);" />
+                  </th>
+                  <th style="padding:10px 8px; text-align:left; font-size:11px;
+                         text-transform:uppercase; letter-spacing:.05em;
+                         color:var(--text-muted);">Employé</th>
+                  <th style="padding:10px 8px; text-align:left; font-size:11px;
+                         text-transform:uppercase; letter-spacing:.05em;
+                         color:var(--text-muted);">Matricule</th>
+                  <th style="padding:10px 8px; text-align:left; font-size:11px;
+                         text-transform:uppercase; letter-spacing:.05em;
+                         color:var(--text-muted);">Direction</th>
+                  <th style="padding:10px 8px; text-align:left; font-size:11px;
+                         text-transform:uppercase; letter-spacing:.05em;
+                         color:var(--text-muted);">Poste</th>
+                  <th style="padding:10px 8px; text-align:left; font-size:11px;
+                         text-transform:uppercase; letter-spacing:.05em;
+                         color:var(--text-muted);">Statut</th>
+                </tr>
+              </thead>
+              <tbody id="corpsTableau">
+                <tr th:each="emp : ${employes}" class="ligne-employe"
+                  th:data-texte="${emp.nom + ' ' + emp.prenom + ' ' + emp.matricule + ' ' + emp.direction}"
+                  style="border-bottom:1px solid var(--border); transition:background .1s;"
+                  onmouseover="this.style.background='var(--bg-page)'" onmouseout="this.style.background=''">
+
+                  <td style="padding:10px;">
+                    <input type="checkbox" name="employeIds" th:value="${emp.id}"
+                      th:checked="${dejaDansCampagne.contains(emp.id)}"
+                      th:disabled="${dejaDansCampagne.contains(emp.id)}" class="case-employe"
+                      onchange="mettreAJourCompteur()"
+                      style="accent-color:var(--srm-green); width:16px; height:16px;" />
+                  </td>
+
+                  <td style="padding:10px 8px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      <div style="width:32px; height:32px; border-radius:50%;
+                              background:var(--srm-green); color:white;
+                              display:flex; align-items:center; justify-content:center;
+                              font-size:12px; font-weight:700; flex-shrink:0;"
+                        th:text="${#strings.substring(emp.nom,0,1) + #strings.substring(emp.prenom,0,1)}">
+                        HA
+                      </div>
+                      <span style="font-weight:500; font-size:13.5px;" th:text="${emp.nom + ' ' + emp.prenom}">Nom
+                        Prénom</span>
+                    </div>
+                  </td>
+
+                  <td style="padding:10px 8px; font-family:monospace; font-size:12.5px;" th:text="${emp.matricule}">
+                    EMP-001</td>
+
+                  <td style="padding:10px 8px; font-size:13px;" th:text="${emp.direction}">DSI</td>
+
+                  <td style="padding:10px 8px; font-size:13px;" th:text="${emp.posteTravaille}">Technicien</td>
+
+                  <td style="padding:10px 8px;">
+                    <!--
+                  Déjà dans la campagne → badge vert "Déjà affecté"
+                  Sinon → badge gris "Non affecté"
+                -->
+                    <span th:if="${dejaDansCampagne.contains(emp.id)}" style="font-size:11px; font-weight:600; padding:3px 10px;
+                             border-radius:20px; background:var(--s-vaccine-bg);
+                             color:var(--s-vaccine-tx);">
+                      ✓ Déjà affecté
+                    </span>
+                    <span th:unless="${dejaDansCampagne.contains(emp.id)}" style="font-size:11px; font-weight:500; padding:3px 10px;
+                             border-radius:20px; background:var(--border);
+                             color:var(--text-muted);">
+                      Non affecté
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Boutons de soumission -->
+        <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:20px;">
+          <a th:href="@{/campagnes}" class="btn btn-outline">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i>
+            Annuler
+          </a>
+          <button sec:authorize="hasRole('GESTIONNAIRE')" type="submit" class="btn btn-primary">
+            <i class="ti ti-check" aria-hidden="true"></i>
+            Affecter les employés sélectionnés
+          </button>
+        </div>
+
+      </form>
+
+    </main>
+  </div>
+
+  <script>
+    /*
+     * mettreAJourCompteur()
+     * Compte les cases cochées (non désactivées) et met à jour le badge.
+     */
+    function mettreAJourCompteur() {
+      const nb = document.querySelectorAll('.case-employe:checked:not(:disabled)').length;
+      document.getElementById('compteur').textContent = nb + ' sélectionné(s)';
+    }
+
+    /*
+     * toutCocherFn(checkbox)
+     * Coche ou décoche toutes les cases visibles non désactivées.
+     */
+    function toutCocherFn(source) {
+      document.querySelectorAll('.case-employe:not(:disabled)').forEach(cb => {
+        const ligne = cb.closest('tr');
+        if (ligne.style.display !== 'none') cb.checked = source.checked;
+      });
+      mettreAJourCompteur();
+    }
+
+    /*
+     * filtrer()
+     * Filtre les lignes selon le texte saisi (nom, matricule, direction).
+     * Utilise l'attribut data-texte de chaque <tr>.
+     */
+    function filtrer() {
+      const terme = document.getElementById('filtreRecherche').value.toLowerCase();
+      document.querySelectorAll('.ligne-employe').forEach(tr => {
+        const texte = tr.getAttribute('data-texte').toLowerCase();
+        tr.style.display = texte.includes(terme) ? '' : 'none';
+      });
+      mettreAJourCompteur();
+    }
+
+    // Initialiser le compteur au chargement
+    mettreAJourCompteur();
+  </script>
+</body>
+
+</html>

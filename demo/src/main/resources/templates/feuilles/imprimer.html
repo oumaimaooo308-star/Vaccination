@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('...')}"></head>
+<head th:replace="~{layout/header :: head('Feuille de consentement')}"></head>
+
+<style>
+  
+  @media print {
+
+    /* Masquer tout ce qui ne fait pas partie du document */
+    .navbar,
+    .no-print,
+    .page-header {
+      display: none !important;
+    }
+
+    /* Supprimer les marges de page du navigateur */
+    body {
+      background: white !important;
+    }
+
+    /* Le document prend toute la page */
+    .print-document {
+      box-shadow: none !important;
+      border: none !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+    }
+
+    /* Forcer l'impression des couleurs de fond */
+    * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+
+<body>
+  <div class="page-wrapper">
+
+    <!-- Navbar masquée à l'impression -->
+    <nav th:replace="~{layout/header :: navbar('feuilles')}" class="no-print"></nav>
+
+    <main class="main-content">
+
+      <!-- ── Barre d'actions (masquée à l'impression) ── -->
+      <div class="no-print" style="display:flex; align-items:center;
+                                  justify-content:space-between; margin-bottom:20px;">
+        <div class="breadcrumb">
+          <a th:href="@{/employes}">Employés</a>
+          <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+          <a th:href="@{/employes/{id}(id=${visite.employe.id})}"
+            th:text="${visite.employe.nom + ' ' + visite.employe.prenom}">Hassan Alami</a>
+          <i class="ti ti-chevron-right" style="font-size:12px;color:var(--text-muted);" aria-hidden="true"></i>
+          <span>Feuille de consentement</span>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <!-- Bouton pour saisir/modifier le consentement si pas encore fait -->
+          <a th:if="${visite.etatConsentement == null}"
+            th:href="@{/campagnes/{cId}/visites/{vId}/consentement(cId=${visite.campagne.id}, vId=${visite.id})}"
+            class="btn btn-outline">
+            <i class="ti ti-edit" aria-hidden="true"></i>
+            Saisir le consentement
+          </a>
+
+          <!-- Bouton d'impression principal -->
+          <button onclick="window.print()" class="btn btn-primary">
+            <i class="ti ti-printer" aria-hidden="true"></i>
+            Imprimer / Enregistrer PDF
+          </button>
+
+          <!-- Retour à la fiche employé -->
+          <a th:href="@{/employes/{id}(id=${visite.employe.id}, campagneId=${visite.campagne.id})}"
+            class="btn btn-outline">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i>
+            Retour à la fiche
+          </a>
+        </div>
+      </div>
+
+      <div class="print-document" style="background:white; border:1px solid var(--border);
+                border-radius:var(--r-lg); max-width:760px;
+                margin:0 auto; padding:40px 48px;
+                box-shadow: var(--shadow-md);">
+
+        <!-- ── En-tête du document ─────────────────── -->
+        <div style="display:flex; align-items:flex-start;
+                  justify-content:space-between; margin-bottom:32px;
+                  padding-bottom:20px; border-bottom:2px solid var(--srm-green);">
+          <div>
+            <!-- Logo SRM textuel -->
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+              <div class="srm-form-header-icon" style="background:none; padding:0;">
+                <img th:src="@{/images/srm-logo.png}" alt="SRM" style="height:48px; width:auto; object-fit:contain;" />
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:15px; color:var(--text-primary);">
+                  Société Régional Multiservice
+                </div>
+                <div style="font-size:12px; color:var(--text-secondary);">
+                  Service Médical — Médecine du Travail
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:12px; color:var(--text-secondary);">Vaccination </div>
+            <div style="font-size:18px; font-weight:700; color:var(--srm-green);">
+              Feuille de consentement
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;"
+              th:text="'Zone ' + ${visite.campagne.centre.ville}">Zone Meknès</div>
+          </div>
+        </div>
+
+        <!-- ── Section 1 : Informations du vaccin ─── -->
+        <div style="margin-bottom:28px;">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase;
+                    letter-spacing:.08em; color:var(--text-muted);
+                    border-left:3px solid var(--srm-green); padding-left:10px;
+                    margin-bottom:16px;">
+            Informations du vaccin
+          </div>
+
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+
+            <div style="background:var(--bg-page); border-radius:8px; padding:14px 16px;">
+              <div style="font-size:10px; font-weight:700; text-transform:uppercase;
+                        letter-spacing:.07em; color:var(--text-muted); margin-bottom:5px;">
+                Nom du vaccin
+              </div>
+              <div style="font-size:15px; font-weight:600; color:var(--text-primary);"
+                th:text="${visite.campagne.nomVaccin}">Hépatite B</div>
+            </div>
+
+
+
+            <div style="background:var(--bg-page); border-radius:8px; padding:14px 16px;">
+              <div style="font-size:10px; font-weight:700; text-transform:uppercase;
+                        letter-spacing:.07em; color:var(--text-muted); margin-bottom:5px;">
+                Date de visite
+              </div>
+              <div style="font-size:15px; font-weight:600; color:var(--text-primary);" th:text="${visite.dateDecision != null
+                   ? #temporals.format(visite.dateDecision,'dd/MM/yyyy')
+                   : 'À définir'}">
+                15/04/2025
+              </div>
+            </div>
+
+            <div style="background:var(--bg-page); border-radius:8px; padding:14px 16px;">
+              <div style="font-size:10px; font-weight:700; text-transform:uppercase;
+                        letter-spacing:.07em; color:var(--text-muted); margin-bottom:5px;">
+                Médecin traitant
+              </div>
+              <!--
+              ${medecin} est injecté par le controller depuis SecurityContext
+              (le nom complet de l'utilisateur connecté)
+            -->
+              <div style="font-size:15px; font-weight:600; color:var(--text-primary);"
+                th:text="${medecin != null ? medecin : 'Dr. —'}">
+                Dr. Karim Benali
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── Section 2 : Accord de l'employé ────── -->
+        <div style="margin-bottom:32px;">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase;
+                    letter-spacing:.08em; color:var(--text-muted);
+                    border-left:3px solid var(--srm-green); padding-left:10px;
+                    margin-bottom:16px;">
+            Accord de l'employé
+          </div>
+
+          <div th:style="${visite.etatConsentement == 'ACCEPTE'}
+                         ? 'border:1.5px solid var(--srm-green); background:var(--srm-green-light); border-radius:12px; padding:20px;'
+                         : (${visite.etatConsentement == 'REFUSE'}
+                           ? 'border:1.5px solid var(--s-nonvax-dot); background:var(--s-nonvax-bg); border-radius:12px; padding:20px;'
+                           : 'border:1.5px solid var(--border-strong); border-radius:12px; padding:20px;')">
+
+            <!-- Icône + titre -->
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            
+              <i th:class="${visite.etatConsentement == 'ACCEPTE'}
+                           ? 'ti ti-circle-check'
+                           : (${visite.etatConsentement == 'REFUSE'}
+                             ? 'ti ti-circle-x'
+                             : 'ti ti-writing')" th:style="${visite.etatConsentement == 'ACCEPTE'}
+                           ? 'font-size:24px; color:var(--srm-green);'
+                           : (${visite.etatConsentement == 'REFUSE'}
+                             ? 'font-size:24px; color:var(--s-nonvax-tx);'
+                             : 'font-size:24px; color:var(--text-secondary);')" aria-hidden="true"></i>
+              <span style="font-size:15px; font-weight:700; color:var(--text-primary);">
+                Déclaration de consentement
+              </span>
+            </div>
+
+            <!-- Texte de la déclaration avec nom de l'employé et vaccin depuis la BD -->
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.7; margin-bottom:20px;">
+              Je soussigné(e),
+              <strong th:text="${visite.employe.nom + ' ' + visite.employe.prenom}">Hassan Alami</strong>,
+              déclare avoir été informé(e) par le médecin du travail de la SRM des modalités,
+              de l'intérêt et des effets secondaires éventuels de la vaccination contre
+              <strong th:text="${visite.campagne.nomVaccin}">l'hépatite B</strong>.
+              Je confirme ma décision ci-dessous concernant la
+              <strong th:text="'dose ' + ${#lists.size(visite.doses) + 1}">dose 3</strong> :
+            </p>
+
+           
+            <div style="display:flex; gap:20px;">
+
+              <!-- Option Oui -->
+              <label style="display:flex; align-items:center; gap:10px;
+                           font-size:14px; font-weight:600; cursor:default;"
+                th:style="${visite.etatConsentement == 'ACCEPTE'}
+                               ? 'color:var(--srm-green); display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600;'
+                               : 'color:var(--text-muted); display:flex; align-items:center; gap:10px; font-size:14px;'">
+               
+                <input type="checkbox" th:checked="${visite.etatConsentement == 'ACCEPTE'}" style="width:18px; height:18px;
+                            accent-color:var(--srm-green);
+                            pointer-events:none;" readonly />
+                Oui, j'accepte la vaccination
+              </label>
+
+              <!-- Option Non -->
+              <label style="display:flex; align-items:center; gap:10px;
+                           font-size:14px; cursor:default;"
+                th:style="${visite.etatConsentement == 'REFUSE'}
+                               ? 'color:var(--s-nonvax-tx); display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600;'
+                               : 'color:var(--text-muted); display:flex; align-items:center; gap:10px; font-size:14px;'">
+                <input type="checkbox" th:checked="${visite.etatConsentement == 'REFUSE'}" style="width:18px; height:18px;
+                            accent-color:var(--s-nonvax-dot);
+                            pointer-events:none;" readonly />
+                Non, je refuse
+              </label>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Section 3 : Signatures ──────────────── -->
+        <div>
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase;
+                    letter-spacing:.08em; color:var(--text-muted);
+                    border-left:3px solid var(--srm-green); padding-left:10px;
+                    margin-bottom:20px;">
+            Signatures
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:48px;">
+
+            <!-- Signature employé -->
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--text-secondary);
+                        text-transform:uppercase; letter-spacing:.05em; margin-bottom:40px;">
+                Signature de l'employé
+              </div>
+              <!-- Zone de signature -->
+              <div style="border-bottom:1px solid var(--border-strong);
+                        padding-bottom:6px; margin-bottom:8px;
+                        color:var(--text-muted); font-size:12px; font-style:italic;">
+                Signature manuscrite
+              </div>
+              <div style="font-size:13.5px; color:var(--text-secondary); font-weight:500;"
+                th:text="${visite.employe.nom + ' ' + visite.employe.prenom}">
+                Hassan Alami
+              </div>
+            </div>
+
+            <!-- Signature médecin -->
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--text-secondary);
+                        text-transform:uppercase; letter-spacing:.05em; margin-bottom:40px;">
+                Cachet et signature du médecin
+              </div>
+              <div style="border-bottom:1px solid var(--border-strong);
+                        padding-bottom:6px; margin-bottom:8px;
+                        color:var(--text-muted); font-size:12px; font-style:italic;">
+                Cachet + signature
+              </div>
+              <div style="font-size:13.5px; color:var(--text-secondary); font-weight:500;"
+                th:text="${(medecin != null ? medecin : 'Dr. —') + ' — Zone ' + visite.campagne.centre.ville}">
+                Dr. Karim Benali — Zone Meknès
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── Pied de page du document ───────────── -->
+        <div style="margin-top:40px; padding-top:16px;
+                  border-top:1px solid var(--border);
+                  display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:11.5px; color:var(--text-muted);">
+            Document confidentiel — SRM / Service Médical — Vaccination 2025
+          </span>
+          <div style="display:flex; gap:6px;">
+            <!-- 3 points SRM décoratifs comme dans la maquette -->
+            <span style="width:8px;height:8px;border-radius:50%;
+                       background:var(--srm-green);display:inline-block;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;
+                       background:var(--srm-green);opacity:.5;display:inline-block;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;
+                       background:var(--srm-green);opacity:.25;display:inline-block;"></span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</body>
+
+</html>

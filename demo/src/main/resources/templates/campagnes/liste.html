@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+
+<head th:replace="~{layout/header :: head('Campagnes de vaccination')}"></head>
+
+<body>
+  <div th:replace="~{layout/header :: navbar('campagnes')}"></div>
+
+  <div id="modalOverlay" class="modal-overlay" style="display:none;" onclick="fermerModalSiDehors(event)">
+
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitre"
+      style="width:100%;max-width:600px;max-height:90vh;overflow-y:auto;">
+
+      <!-- En-tête modal -->
+      <div class="modal-header">
+        <h4 id="modalTitre" style="display:flex;align-items:center;gap:8px;margin:0;font-size:16px;">
+          <i class="ti ti-vaccine" style="color:var(--srm-green);" aria-hidden="true"></i>
+          Nouvelle campagne
+        </h4>
+        <button type="button" class="btn-close-modal" onclick="fermerModal()" aria-label="Fermer">
+          <i class="ti ti-x" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- Corps modal -->
+      <div class="modal-body" style="padding:24px;">
+
+        <form th:action="@{/campagnes/nouveau}" method="post" enctype="multipart/form-data" id="formCampagne">
+
+          <input type="hidden" name="centreId" th:value="${centreId}" />
+
+          <!-- ── Section 1 : Vaccin ── -->
+          <div class="m-section">
+            <div class="m-section-title">
+              <i class="ti ti-vaccine" aria-hidden="true"></i>
+              Informations du vaccin
+            </div>
+
+            <!-- Nom -->
+            <div class="m-group">
+              <label class="m-label" for="mNomVaccin">
+                Nom du vaccin <span class="m-req">*</span>
+              </label>
+              <input type="text" id="mNomVaccin" name="nomVaccin" class="m-input"
+                placeholder="ex : Hépatite B, Grippe saisonnière…" required maxlength="100" />
+            </div>
+
+            <!-- Description -->
+            <div class="m-group">
+              <label class="m-label" for="mDescription">
+                Description
+                <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(optionnel)</span>
+              </label>
+              <textarea id="mDescription" name="description" class="m-input m-textarea"
+                placeholder="Objectif, population cible…" rows="2"></textarea>
+            </div>
+
+            <!-- Date + Doses côte à côte -->
+            <div class="m-row2">
+              <div class="m-group">
+                <label class="m-label" for="mDate">
+                  Date de lancement <span class="m-req">*</span>
+                </label>
+                <input type="date" id="mDate" name="dateCompagne" class="m-input" required />
+              </div>
+              <div class="m-group">
+                <label class="m-label" for="mNbDoses">
+                  Doses max <span class="m-req">*</span>
+                </label>
+                <input type="number" id="mNbDoses" name="nbDoses" class="m-input" min="1" max="10" placeholder="ex : 2"
+                  required />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Section 2 : Affecter employés (optionnel) ── -->
+          <div class="m-section">
+            <div class="m-section-title">
+              <i class="ti ti-users" aria-hidden="true"></i>
+              Affecter des employés
+              <span style="font-weight:400;font-size:12px;color:var(--text-muted);margin-left:4px;">(optionnel)</span>
+            </div>
+
+            <!-- Onglets -->
+            <div class="m-tabs">
+              <button type="button" class="m-tab m-tab-active" data-mtab="mTabDir">
+                <i class="ti ti-building" aria-hidden="true"></i> Par direction
+              </button>
+              <button type="button" class="m-tab" data-mtab="mTabImport">
+                <i class="ti ti-file-import" aria-hidden="true"></i> Import Excel / CSV
+              </button>
+            </div>
+
+            <!-- Tab direction -->
+            <div id="mTabDir" class="m-tab-pane">
+              <p class="m-hint">
+                Cochez les directions à inclure — leurs employés seront initialisés en
+                <span class="badge badge-instance" style="font-size:11px;">EN_INSTANCE</span>.
+              </p>
+              <div class="m-dir-grid">
+                <label th:each="dir, s : ${directions}" class="m-dir-item" th:for="'mdir-' + ${s.index}">
+                  <input type="checkbox" name="directionsSelectionnees" th:value="${dir}"
+                    th:id="'mdir-' + ${s.index}" />
+                  <span th:text="${dir}">Direction</span>
+                </label>
+                <p th:if="${#lists.isEmpty(directions)}" class="m-hint">
+                  <i class="ti ti-info-circle" aria-hidden="true"></i>
+                  Aucune direction trouvée pour ce centre.
+                </p>
+              </div>
+            </div>
+
+            <!-- Tab import -->
+            <div id="mTabImport" class="m-tab-pane" style="display:none;">
+              <p class="m-hint">
+                Importez un <strong>.xlsx</strong> ou <strong>.csv</strong>
+                avec une colonne <code style="background:var(--bg-page);padding:1px 5px;
+                border-radius:4px;font-size:12px;">matricule</code>.
+              </p>
+              <div class="m-dropzone" id="mDropZone">
+                <i class="ti ti-upload" aria-hidden="true"
+                  style="font-size:24px;color:var(--text-muted);display:block;margin-bottom:6px;"></i>
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">
+                  Glissez un fichier ici ou
+                </div>
+                <label for="mFichierImport" class="btn btn-outline btn-sm" style="cursor:pointer;">
+                  <i class="ti ti-folder-open" aria-hidden="true"></i> Parcourir
+                </label>
+                <input type="file" id="mFichierImport" name="fichierImport" accept=".xlsx,.xls,.csv"
+                  style="display:none;" onchange="majNomFichier(this)" />
+                <div id="mNomFichier" style="display:none;margin-top:8px;font-size:12.5px;
+                            color:var(--srm-green);font-weight:600;"></div>
+              </div>
+              <div style="margin-top:10px;">
+                <a th:href="@{/campagnes/modele-import}" class="btn btn-outline btn-sm">
+                  <i class="ti ti-download" aria-hidden="true"></i> Télécharger le modèle
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Boutons ── -->
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+            <button type="button" class="btn btn-outline" onclick="fermerModal()">
+              <i class="ti ti-x" aria-hidden="true"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="ti ti-check" aria-hidden="true"></i> Créer la campagne
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- FIN MODAL -->
+
+  <!-- ══════════════════════════ CONTENU PRINCIPAL ══════════════════════════ -->
+  <div class="container-fluid px-4 py-4" id="pageContent">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold mb-0">Campagnes de vaccination</h2>
+        <p class="text-muted small mb-0" th:text="${centreNom}">Centre</p>
+      </div>
+      <button sec:authorize="hasRole('GESTIONNAIRE')" type="button" class="btn btn-srm" onclick="ouvrirModal()">
+        <i class="ti ti-plus me-2" aria-hidden="true"></i>Nouvelle campagne
+      </button>
+    </div>
+
+    <!-- Messages flash -->
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+      <i class="ti ti-circle-check me-2" aria-hidden="true"></i>Campagne créée avec succès.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${param.deleted}" class="alert alert-warning alert-dismissible fade show">
+      <i class="ti ti-trash me-2" aria-hidden="true"></i>Campagne supprimée.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-card">
+      <div class="table-card-header d-flex gap-2 flex-wrap">
+        <input type="text" id="recherche" class="form-control w-auto flex-grow-1" placeholder="Rechercher une campagne…"
+          oninput="filtrerTableau()" />
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="tableCampagnes">
+          <thead>
+            <tr>
+              <th>Vaccin</th>
+              <th>Date lancement</th>
+              <th>Doses max</th>
+              <th>Employés</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="c : ${campagnes}" class="ligne-tableau">
+              <td>
+                <span class="fw-semibold" th:text="${c.nomVaccin}">Vaccin</span>
+                <div class="text-muted small" th:text="${c.description}"></div>
+              </td>
+              <td th:text="${#temporals.format(c.dateCompagne, 'dd/MM/yyyy')}">Date</td>
+              <td>
+                <span class="badge bg-light text-dark border" th:text="${c.nbDose} + ' dose(s)'">3</span>
+              </td>
+              <td th:text="${#lists.size(c.visites)} + ' employé(s)'">0</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a th:href="@{'/campagnes/' + ${c.id}}" class="btn btn-sm btn-outline-primary" title="Détail">
+                    <i class="ti ti-eye" aria-hidden="true"></i>
+                  </a>
+                  <a th:href="@{'/campagnes/' + ${c.id} + '/visites'}" class="btn btn-sm btn-outline-success"
+                    title="Visites">
+                    <i class="ti ti-stethoscope" aria-hidden="true"></i>
+                  </a>
+                  <a sec:authorize="hasRole('GESTIONNAIRE')" th:href="@{'/campagnes/' + ${c.id} + '/ajouter-employes'}"
+                    class="btn btn-sm btn-outline-warning" title="Affecter employés">
+                    <i class="ti ti-user-plus" aria-hidden="true"></i>
+                  </a>
+                  <form sec:authorize="hasRole('GESTIONNAIRE')" th:action="@{'/campagnes/' + ${c.id} + '/supprimer'}"
+                    method="post" onsubmit="return confirm('Supprimer cette campagne ?')">
+                    <input type="hidden" name="centreId" th:value="${centreId}" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                      <i class="ti ti-trash" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(campagnes)}">
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="ti ti-mood-empty me-2" aria-hidden="true"></i>Aucune campagne pour ce centre.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════ STYLES MODAL ══════════════════════════ -->
+  <style>
+    /* Sections du formulaire dans le modal */
+    .m-section {
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 18px;
+      margin-bottom: 14px;
+      background: var(--bg-page);
+    }
+
+    .m-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .m-section-title i {
+      color: var(--srm-green);
+    }
+
+    .m-group {
+      margin-bottom: 13px;
+    }
+
+    .m-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .m-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+
+    .m-req {
+      color: #dc2626;
+    }
+
+    .m-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      font-size: 13.5px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-sizing: border-box;
+      font-family: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .m-input:focus {
+      outline: none;
+      border-color: var(--srm-green);
+      box-shadow: 0 0 0 3px rgba(26, 107, 74, .1);
+    }
+
+    .m-textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+
+    .m-row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width:480px) {
+      .m-row2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .m-hint {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin: 0 0 12px;
+    }
+
+    /* Onglets */
+    .m-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .m-tab {
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color .15s;
+    }
+
+    .m-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .m-tab.m-tab-active {
+      color: var(--srm-green);
+      border-bottom-color: var(--srm-green);
+    }
+
+    /* Checkboxes directions */
+    .m-dir-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 7px;
+    }
+
+    .m-dir-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+
+    .m-dir-item:hover {
+      border-color: var(--srm-green);
+      background: var(--srm-green-light, #e8f5ee);
+    }
+
+    .m-dir-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--srm-green);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .m-dir-item:has(input:checked) {
+      border-color: var(--srm-green);
+      background: var(--srm-green-light, #e8f5ee);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Zone de dépôt */
+    .m-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--r-md);
+      padding: 22px 16px;
+      text-align: center;
+      background: var(--bg-card);
+      transition: border-color .15s, background .15s;
+    }
+
+    .m-dropzone.over {
+      border-color: var(--srm-green);
+      background: var(--srm-green-light, #e8f5ee);
+    }
+  </style>
+
+  <!-- ══════════════════════════ SCRIPTS ══════════════════════════ -->
+  <script>
+    // ── Modal open/close ──────────────────────────────────────────
+    function ouvrirModal() {
+      document.getElementById('modalOverlay').style.display = 'flex';
+      document.getElementById('pageContent').classList.add('blurred');
+      document.body.style.overflow = 'hidden';
+    }
+    function fermerModal() {
+      document.getElementById('modalOverlay').style.display = 'none';
+      document.getElementById('pageContent').classList.remove('blurred');
+      document.body.style.overflow = '';
+    }
+    function fermerModalSiDehors(event) {
+      if (event.target === event.currentTarget) fermerModal();
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerModal(); });
+
+    // ── Onglets du modal ──────────────────────────────────────────
+    document.querySelectorAll('.m-tab').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.m-tab').forEach(b => b.classList.remove('m-tab-active'));
+        document.querySelectorAll('.m-tab-pane').forEach(p => p.style.display = 'none');
+        this.classList.add('m-tab-active');
+        document.getElementById(this.dataset.mtab).style.display = 'block';
+      });
+    });
+
+    // ── Nom du fichier sélectionné ────────────────────────────────
+    function majNomFichier(input) {
+      const el = document.getElementById('mNomFichier');
+      if (input.files.length > 0) {
+        el.textContent = '✓ ' + input.files[0].name;
+        el.style.display = 'block';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
+    // ── Drag & drop ───────────────────────────────────────────────
+    const zone = document.getElementById('mDropZone');
+    const inp = document.getElementById('mFichierImport');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      if (e.dataTransfer.files.length) {
+        inp.files = e.dataTransfer.files;
+        majNomFichier(inp);
+      }
+    });
+
+    // ── Filtre tableau ────────────────────────────────────────────
+    function filtrerTableau() {
+      const terme = document.getElementById('recherche').value.toLowerCase();
+      document.querySelectorAll('#tableCampagnes .ligne-tableau').forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(terme) ? '' : 'none';
+      });
+    }
+
+    // ── Auto-ouvrir le modal si ?openModal=true ───────────────────
+    if (new URLSearchParams(window.location.search).get('openModal') === 'true') {
+      ouvrirModal();
+    }
+  </script>
+
+</body>
+
+</html>
